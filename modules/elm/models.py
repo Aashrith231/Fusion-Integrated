@@ -514,6 +514,12 @@ class LeaveTask(TimeStampedModel):
                   "offline-recorded leave, which has "
                   "no application",
     )
+    #: the resumption this task reviews (resumption_review tasks)
+    resumption = models.ForeignKey(
+        "Resumption", null=True, blank=True,
+        on_delete=models.CASCADE,
+        related_name="tasks",
+    )
     task_class = models.CharField(max_length=30, choices=TASK_CLASSES)
     assignee_user_id = models.IntegerField(db_index=True)
     assignee_role = models.CharField(max_length=30,

@@ -39,8 +39,30 @@ def notify(user_id: int, topic: str, subject: str,
 
 
 def notify_task_assigned(task) -> None:
-    """BR-EL-035: notify the assignee of a new task."""
+    """BR-EL-035: notify the assignee of a new task.
+
+    A resumption task on offline-recorded leave has no
+    application behind it (``task.request`` is ``None``); it
+    still notifies, describing the resumption instead of a
+    request.
+    """
     request = task.request
+    if request is None:
+        notify(
+            task.assignee_user_id,
+            "task_assigned",
+            f"Leave {task.task_class.replace('_', ' ')}: "
+            f"your action needed",
+            f"A {task.task_class.replace('_', ' ')} task needs "
+            f"your action on a resumption of duty recorded "
+            f"offline (no application behind it).",
+            payload={"task_id": task.id,
+                     "task_class": task.task_class},
+            dedupe_key=(
+                f"task:none:{task.task_class}:"
+                f"{task.assignee_user_id}:{task.id}"),
+        )
+        return
     notify(
         task.assignee_user_id,
         "task_assigned",
@@ -56,6 +78,37 @@ def notify_task_assigned(task) -> None:
             f"task:{request.id}:{task.task_class}:"
             f"{task.assignee_user_id}:{task.id}"),
     )
+
+
+def notify_request_withdrawn(request, watchers=()) -> None:
+    """BR-EL-022: withdrawal informs the concerned roles — the
+    applicant gets a confirmation, everyone who held a live
+    task on the request is told it is off their queue."""
+    notify(
+        request.user_id,
+        "request_update",
+        f"Leave {request.category} request withdrawn",
+        f"Your {request.category} leave request "
+        f"({request.start_date} → {request.end_date}) "
+        f"was withdrawn.",
+        payload={"request_id": request.id, "outcome": "withdrawn"},
+        dedupe_key=f"outcome:{request.id}:withdrawn",
+    )
+    for user_id in watchers:
+        if user_id == request.user_id:
+            continue
+        notify(
+            user_id,
+            "request_update",
+            f"Leave {request.category} request withdrawn",
+            f"The {request.category} leave request "
+            f"({request.start_date} → {request.end_date}) "
+            f"you were acting on was withdrawn by the "
+            f"applicant.",
+            payload={"request_id": request.id,
+                     "outcome": "withdrawn"},
+            dedupe_key=f"withdrawn:{request.id}:{user_id}",
+        )
 
 
 def notify_request_outcome(request, outcome: str) -> None:

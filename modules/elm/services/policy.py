@@ -9,12 +9,14 @@ Leave Administrator has configured.
 """
 from __future__ import annotations
 
+from datetime import timedelta
 from decimal import Decimal
 
 from modules.elm.domain import routing as routing_domain
 from modules.elm.domain.leave_types import (
     BASELINE_ENTITLEMENTS,
     CATEGORIES,
+    EL,
     KIND_FACULTY,
     VL,
 )
@@ -62,11 +64,16 @@ def entitlement_for(category: str,
 
     VL is faculty-only: a staff member's VL entitlement is
     zero, which is what makes the submission guard (BR-EL-006)
-    and the balance check agree.
+    and the balance check agree. Conversely (BR-EL-005) a
+    faculty member holds no granted EL — faculty EL credit
+    exists only through VL conversion at year-end, so their
+    EL entitlement is zero too.
     """
     if category not in CATEGORIES:
         return Decimal("0")
     if category == VL and employee_kind not in (None, KIND_FACULTY):
+        return Decimal("0")
+    if category == EL and employee_kind == KIND_FACULTY:
         return Decimal("0")
     raw = _raw(category).get("annual_days")
     return Decimal(str(raw)) if raw is not None else Decimal("0")
@@ -103,18 +110,24 @@ def year_end_boundary() -> str:
 def leave_year_for(day, boundary_md: str | None = None) -> str:
     """Which leave-year a date belongs to (PS §3).
 
-    The leave year runs from the day after the boundary to
-    the boundary: with the default 03-31 boundary, 2026-04-01
-    opens leave-year 2026-27 and 2026-03-01 still belongs to
-    2025-26.
+    The leave year runs from the day after the boundary to the
+    boundary, inclusive: with the default 03-31 boundary, the
+    boundary day 2026-03-31 itself still belongs to 2025-26 and
+    2026-04-01 opens leave-year 2026-27. The year is labelled
+    with the calendar year it starts in.
     """
     boundary_md = boundary_md or year_end_boundary()
     month, day_of_month = (int(part)
                            for part in boundary_md.split("-"))
     boundary = day.__class__(day.year, month, day_of_month)
-    if day >= boundary:
-        return f"{day.year}-{str(day.year + 1)[2:]}"
-    return f"{day.year - 1}-{str(day.year)[2:]}"
+    if day > boundary:
+        closing_year = day.year + 1
+    else:
+        closing_year = day.year
+    # The year opened the day after the previous boundary.
+    start = day.__class__(closing_year - 1,
+                          month, day_of_month) + timedelta(days=1)
+    return f"{start.year}-{str(start.year + 1)[2:]}"
 
 
 def next_leave_year(leave_year: str) -> str:

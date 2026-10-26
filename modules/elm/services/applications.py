@@ -15,6 +15,8 @@ import logging
 from datetime import timedelta
 from decimal import Decimal
 
+from django.db import transaction
+
 from core.api.exceptions import ConflictError, PermissionDeniedError
 from modules.elm.domain.errors import (
     CalendarViolation,
@@ -76,6 +78,7 @@ def create_draft(principal, *, category: str, **fields) -> LeaveRequest:
         category=category, status="draft", **fields)
 
 
+@transaction.atomic
 def submit(request: LeaveRequest, principal, *,
              substitute_user_id: int | None = None,
              substitute_required: bool = False,
@@ -98,6 +101,8 @@ def submit(request: LeaveRequest, principal, *,
 
     try:
         _validate_submission(request)
+        if substitute_required and substitute_user_id is not None:
+            _validate_nominee(request, substitute_user_id)
     except Exception as exc:
         raise _translate(exc) from exc
 
@@ -107,7 +112,6 @@ def submit(request: LeaveRequest, principal, *,
             raise ConflictError(
                 "Responsibility coverage is required: nominate "
                 "a substitute.", code="substitute_required")
-        _validate_nominee(request, substitute_user_id)
         SubstituteNomination.objects.create(
             request=request, nominee_user_id=substitute_user_id)
 
@@ -255,17 +259,6 @@ def _validate_no_overlap(request: LeaveRequest,
                 f"Overlaps your approved {record.category} "
                 f"leave ({record.start_date} → {record.end_date}).")
 
-    # PS §2: Station Leave details, inside the same
-    # application.
-    if request.station_leave:
-        details = request.station_details or {}
-        if not (details.get("destination")
-                and details.get("from") and details.get("to")):
-            raise ConflictError(
-                "Station Leave requires a destination and "
-                "travel dates in the application.",
-                code="station_details_required")
-
 
 def _validate_nominee(request: LeaveRequest,
                         nominee_user_id: int) -> None:
@@ -398,7 +391,11 @@ def _hierarchy_for(category: str,
                 policy_service.director_designations()),
         )
     return HierarchyProfile(
-        establishment_required=(group == "higher_sanction"),
+        # BR-EL-019: Establishment processing is required
+        # only where it is configured; the unconfigured
+        # fallback routes straight to the Sanctioning
+        # Authority.
+        establishment_required=False,
         establishment_designations=tuple(
             policy_service.establishment_designations()),
         sanctioning_authority="Dean",

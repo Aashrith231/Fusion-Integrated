@@ -123,7 +123,7 @@ def _own_request(request, pk) -> LeaveRequest:
 
 
 def _dispatch_decide(request_obj, principal, *,
-                         outcome: str, reason: str):
+                         outcome: str, reason: str = ""):
     """Route a decision to the seat the request's
     current state belongs to."""
     if request_obj.status in UNIT_HEAD_STATES:

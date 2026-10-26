@@ -22,6 +22,7 @@ from collections.abc import Sequence
 from datetime import timedelta
 from decimal import Decimal
 
+from django.db import transaction
 from django.utils import timezone
 
 from core.api.exceptions import ConflictError, PermissionDeniedError
@@ -259,8 +260,7 @@ def _resolve_assignees(request: LeaveRequest,
 
 
 def _verify_actor(request: LeaveRequest, actor: str,
-                    principal, transition_: machine.Transition,
-                    ) -> None:
+                    principal) -> None:
     """The right office-holder, not merely a permission
     holder. A Unit Head elsewhere in the institute is not
     the reviewer for this applicant."""
@@ -309,63 +309,70 @@ def apply_transition(request: LeaveRequest, *, actor: str,
                        guard: str, outcome: str, reason: str,
                        principal) -> LeaveRequest:
     """Take one state-machine move. Raises before mutating
-    anything when the move is not legal for this caller."""
-    try:
-        transition_ = machine.transition(
-            request.kind, request.status, actor, guard)
-    except InvalidTransition as exc:
-        raise ConflictError(
-            f"A {request.kind} request cannot move from "
-            f"{request.status!r} by that action.",
-            code="invalid_transition",
-            details=[{"from": request.status,
-                      "guard": guard, "actor": actor}],
-        ) from exc
+    anything when the move is not legal for this caller.
 
-    _verify_actor(request, actor, principal, transition_)
+    The whole move — task retirement, state change, decision
+    bookkeeping, side effects and the next task spawn — is one
+    transaction: a failure halfway through must leave neither a
+    half-completed task nor a taskless state behind.
+    """
+    with transaction.atomic():
+        try:
+            transition_ = machine.transition(
+                request.kind, request.status, actor, guard)
+        except InvalidTransition as exc:
+            raise ConflictError(
+                f"A {request.kind} request cannot move from "
+                f"{request.status!r} by that action.",
+                code="invalid_transition",
+                details=[{"from": request.status,
+                          "guard": guard, "actor": actor}],
+            ) from exc
 
-    from_status = request.status
+        _verify_actor(request, actor, principal)
 
-    # The task this move answers retires first.
-    if transition_.task:
-        task = _pending_task(request, transition_.task)
-        if task is not None:
-            _complete_task(task, outcome=outcome or guard,
-                             reason=reason,
-                             user_id=principal.user_id)
+        from_status = request.status
 
-    request.status = transition_.to
+        # The task this move answers retires first.
+        if transition_.task:
+            task = _pending_task(request, transition_.task)
+            if task is not None:
+                _complete_task(task, outcome=outcome or guard,
+                                 reason=reason,
+                                 user_id=principal.user_id)
 
-    # Decision bookkeeping, keyed off the guard that fired.
-    if guard in ("higher_recommend_establishment",
-                 "higher_recommend_no_establishment"):
-        request.recommendation = (
-            "recommended" if outcome == "recommended"
-            else "not_recommended")
-        request.recommendation_reason = reason
-    if (guard.startswith(("cl_rh_final",
-                          "director_self_sanction"))
-            or guard in ("sanction_approve",
-                         "sanction_reject")):
-        request.decided_by_user_id = principal.user_id
-        request.decided_at = timezone.now()
-        request.decision_reason = reason
+        request.status = transition_.to
 
-    _log(request, "state_change", from_status=from_status,
-           to_status=transition_.to, actor=principal.user_id,
-           actor_label=authz.user_label(principal),
-           outcome=outcome, reason=reason)
+        # Decision bookkeeping, keyed off the guard that fired.
+        if guard in ("higher_recommend_establishment",
+                     "higher_recommend_no_establishment"):
+            request.recommendation = (
+                "recommended" if outcome == "recommended"
+                else "not_recommended")
+            request.recommendation_reason = reason
+        if (guard.startswith(("cl_rh_final",
+                              "director_self_sanction"))
+                or guard in ("sanction_approve",
+                             "sanction_reject")):
+            request.decided_by_user_id = principal.user_id
+            request.decided_at = timezone.now()
+            request.decision_reason = reason
 
-    request.save()
+        _log(request, "state_change", from_status=from_status,
+                 to_status=transition_.to, actor=principal.user_id,
+                 actor_label=authz.user_label(principal),
+                 outcome=outcome, reason=reason)
 
-    # Terminal side effects: the leave itself, and the money.
-    if transition_.to == APPROVED:
-        _on_approved(request, principal)
-    elif transition_.to == REJECTED:
-        notifications.notify_request_outcome(request, "rejected")
+        request.save()
 
-    spawn_tasks(request)
-    return request
+        # Terminal side effects: the leave itself, and the money.
+        if transition_.to == APPROVED:
+            _on_approved(request, principal)
+        elif transition_.to == REJECTED:
+            notifications.notify_request_outcome(request, "rejected")
+
+        spawn_tasks(request)
+        return request
 
 
 def _on_approved(request: LeaveRequest, principal) -> None:
@@ -382,9 +389,25 @@ def _on_approved(request: LeaveRequest, principal) -> None:
 
 
 def _account_for(request: LeaveRequest) -> LeaveAccount:
-    account, _ = LeaveAccount.objects.get_or_create(
+    """The applicant's account for this leave year and
+    category, created on demand.
+
+    A lazily created account seeds ``entitled_days`` from
+    the policy entitlement — otherwise an account born at
+    approval time would carry zero entitlement and show a
+    negative balance.
+    """
+    from modules.elm.selectors import balances as balance_selector
+
+    account, created = LeaveAccount.objects.get_or_create(
         user_id=request.user_id, leave_year=request.leave_year,
         category=request.category)
+    if created and account.entitled_days == 0:
+        profile = authz.employee_profile(request.user_id)
+        account.entitled_days = policy_service.entitlement_for(
+            request.category,
+            profile.employee_kind if profile else None)
+        account.save()
     return account
 
 
@@ -512,28 +535,35 @@ def _active_nomination(request: LeaveRequest):
         request=request, is_active=True).first()
 
 
-def create_resumption_task(resumption, assignee_user_id: int) -> LeaveTask:
+def create_resumption_task(resumption, assignee_user_ids) -> list[LeaveTask]:
     """Queue the resumption review with the applicable
     Sanctioning Authority (EL-UC-011).
 
     The task hangs off the original application when the
     leave went through ELM; for offline-recorded leave
-    there is no application, so the task stands alone.
+    there is no application, so the task stands alone and
+    points at the resumption itself. Where the authority is
+    an office held by several people, each holder gets
+    their own task — first mover wins (BR-EL-027).
     """
-    task = LeaveTask.objects.create(
-        request=resumption.request,
-        task_class="resumption_review",
-        assignee_user_id=assignee_user_id,
-        assignee_role=ROLE_SANCTIONING_AUTHORITY,
-    )
-    _log(resumption.request, "task_assigned",
-           outcome="resumption_review",
-           payload={"task_id": task.id,
-                    "resumption_id": resumption.id,
-                    "record_id": resumption.record_id,
-                    "assignee_user_id": assignee_user_id})
-    notifications.notify_task_assigned(task)
-    return task
+    tasks = []
+    for user_id in assignee_user_ids:
+        task = LeaveTask.objects.create(
+            request=resumption.request,
+            resumption=resumption,
+            task_class="resumption_review",
+            assignee_user_id=user_id,
+            assignee_role=ROLE_SANCTIONING_AUTHORITY,
+        )
+        _log(resumption.request, "task_assigned",
+             outcome="resumption_review",
+             payload={"task_id": task.id,
+                      "resumption_id": resumption.id,
+                      "record_id": resumption.record_id,
+                      "assignee_user_id": user_id})
+        notifications.notify_task_assigned(task)
+        tasks.append(task)
+    return tasks
 
 
 def route_is_director(request: LeaveRequest) -> bool:
@@ -549,8 +579,9 @@ def withdraw(request: LeaveRequest, principal, *,
     """Withdraw a pending request (EL-UC-007, BR-EL-022/023).
 
     Valid from every pending pre-final state. Retires every
-    remaining task and notifies the roles that were waiting
-    on the request.
+    remaining task, releases the substitute gate and informs
+    the concerned roles — everyone holding a live task on the
+    request, plus the applicant's confirmation (BR-EL-035).
     """
     if principal.user_id != request.user_id:
         raise PermissionDeniedError(
@@ -568,29 +599,41 @@ def withdraw(request: LeaveRequest, principal, *,
             "This request is no longer in a state that can be "
             "withdrawn.", code="invalid_transition") from exc
 
-    from_status = request.status
-    request.status = WITHDRAWN
-    request.withdrawn_at = timezone.now()
-    request.withdraw_reason = reason
-    request.save()
+    with transaction.atomic():
+        from_status = request.status
+        # The concerned roles are whoever holds a live task on
+        # the request right now — capture them before the
+        # tasks are retired.
+        watchers = sorted({
+            t.assignee_user_id
+            for t in LeaveTask.objects.filter(request=request,
+                                              status="pending")})
 
-    _cancel_tasks(
-        LeaveTask.objects.filter(request=request,
-                                   status="pending"),
-        reason="Request withdrawn")
-    nomination = _active_nomination(request)
-    if nomination is not None:
-        nomination.status = "withdrawn"
-        nomination.is_active = False
-        nomination.save()
+        request.status = WITHDRAWN
+        request.withdrawn_at = timezone.now()
+        request.withdraw_reason = reason
+        request.save()
 
-    _log(request, "state_change", from_status=from_status,
-           to_status=WITHDRAWN, actor=principal.user_id,
-           actor_label=authz.user_label(principal),
-           outcome="withdrawn", reason=reason)
+        _cancel_tasks(
+            LeaveTask.objects.filter(request=request,
+                                     status="pending"),
+            reason="Request withdrawn")
+        nomination = _active_nomination(request)
+        if nomination is not None:
+            nomination.status = "withdrawn"
+            nomination.is_active = False
+            nomination.save()
+
+        _log(request, "state_change", from_status=from_status,
+             to_status=WITHDRAWN, actor=principal.user_id,
+             actor_label=authz.user_label(principal),
+             outcome="withdrawn", reason=reason)
+        notifications.notify_request_withdrawn(request, watchers)
     return request
 
 
+
+@transaction.atomic
 def respond_substitute(request: LeaveRequest, principal, *,
                          accept: bool,
                          reason: str = "") -> LeaveRequest:
@@ -618,6 +661,8 @@ def respond_substitute(request: LeaveRequest, principal, *,
             guard = ("substitute_accepted_director"
                      if route_is_director(request)
                      else "substitute_accepted_not_director")
+        elif route_is_director(request):
+            guard = "substitute_accepted_director"
         else:
             guard = "substitute_accepted"
         outcome = "accepted"
@@ -625,15 +670,53 @@ def respond_substitute(request: LeaveRequest, principal, *,
         guard = "substitute_declined"
         outcome = "declined"
 
+    # The transition first — it re-verifies the actor against
+    # the still-active nomination — then record the response.
+    result = apply_transition(
+        request, actor=ACTOR_SUBSTITUTE, guard=guard,
+        outcome=outcome, reason=reason, principal=principal)
     nomination.status = outcome
     nomination.responded_at = timezone.now()
     nomination.response_reason = reason
     nomination.is_active = accept
     nomination.save()
+    return result
 
+
+def nominate_replacement(request: LeaveRequest, principal, *,
+                           nominee_user_id: int,
+                           reason: str = "") -> LeaveRequest:
+    """Nominate a replacement substitute after a decline
+    (EL-UC-019, BR-EL-014/015).
+
+    Only the applicant, and only while the request sits in
+    the applicant-action state a decline left it in. The
+    nominee must satisfy the same eligibility rules as the
+    original (BR-EL-014); on success the consent gate
+    re-opens with a fresh task for the new nominee.
+    """
+    if principal.user_id != request.user_id:
+        raise PermissionDeniedError(
+            "Only the applicant may nominate a replacement "
+            "substitute.", code="not_actor")
+    applicant_action = (
+        machine.EXTENSION_APPLICANT_ACTION_REQUIRED
+        if request.kind == KIND_EXTENSION
+        else machine.APPLICANT_ACTION_REQUIRED)
+    if request.status != applicant_action:
+        raise ConflictError(
+            "A replacement substitute can be nominated only "
+            "after a decline.", code="invalid_transition")
+
+    from modules.elm.services.applications import _validate_nominee
+
+    _validate_nominee(request, nominee_user_id)
+    SubstituteNomination.objects.create(
+        request=request, nominee_user_id=nominee_user_id)
     return apply_transition(
-        request, actor=ACTOR_SUBSTITUTE, guard=guard,
-        outcome=outcome, reason=reason, principal=principal)
+        request, actor=ACTOR_EMPLOYEE, guard="replacement_nominated",
+        outcome="replacement_nominated", reason=reason,
+        principal=principal)
 
 
 def unit_head_decide(request: LeaveRequest, principal, *,
@@ -646,12 +729,25 @@ def unit_head_decide(request: LeaveRequest, principal, *,
     categories: the Unit Head records Recommended /
     Not Recommended and the request moves up the hierarchy —
     either way it advances; the recommendation is advice to
-    the authority, not a veto.
+    the authority, not a veto. The two vocabularies are
+    state-specific (BR-EL-016/017): a recommend on a CL/RH
+    review, or an approve/reject on a higher-sanction review,
+    is refused as invalid_outcome.
     """
     if request.category in ("CL", "RH"):
+        if outcome not in ("approve", "reject"):
+            raise ConflictError(
+                "A CL/RH review by the Unit Head decides: the "
+                "outcome is approve or reject.",
+                code="invalid_outcome")
         guard = ("cl_rh_final_approve" if outcome == "approve"
                  else "cl_rh_final_reject")
     else:
+        if outcome not in ("recommended", "not_recommended"):
+            raise ConflictError(
+                "A higher-sanction review by the Unit Head "
+                "recommends: the outcome is recommended or "
+                "not_recommended.", code="invalid_outcome")
         has_establishment = any(
             step.get("role") == ROLE_ESTABLISHMENT
             for step in (request.route or []))
@@ -676,8 +772,16 @@ def establishment_forward(request: LeaveRequest, principal, *,
 def final_decide(request: LeaveRequest, principal, *,
                    outcome: str,
                    reason: str = "") -> LeaveRequest:
-    """The final sanctioning decision (EL-UC-005/006)."""
-    if route_is_director(request):
+    """The final sanctioning decision (EL-UC-005/006).
+
+    The Director's own *application* (BR-EL-019/020) takes the
+    spec's director self-sanction guards; every other final
+    decision state — including a Director's own cancellation or
+    extension — takes the plain sanction guards. On the
+    director path only the applicant may decide, which the
+    actor check enforces either way.
+    """
+    if request.kind == KIND_NEW and route_is_director(request):
         guard = ("director_self_sanction_approve"
                  if outcome == "approve"
                  else "director_self_sanction_reject")

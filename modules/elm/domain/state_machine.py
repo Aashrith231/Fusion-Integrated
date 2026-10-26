@@ -121,12 +121,22 @@ NEW_LEAVE = (
                "sanction_reject", REJECTED, task="final_sanction"),
 
     # Director self-sanction (EL-UC-006, BR-EL-019).
+    # The Director acts as the Sanctioning Authority, so the same
+    # decision rows exist under both guard names: the director_*
+    # guards carry the spec's workflow-specific wording, the plain
+    # sanction_* guards are the uniform rows every final decision
+    # state shares. Whoever may act is settled by the actor check,
+    # never by the table.
     Transition(KIND_NEW, AWAITING_DIRECTOR_SELF_SANCTION, ACTOR_SANCTIONING,
                "director_self_sanction_approve", APPROVED,
                task="final_sanction"),
     Transition(KIND_NEW, AWAITING_DIRECTOR_SELF_SANCTION, ACTOR_SANCTIONING,
                "director_self_sanction_reject", REJECTED,
                task="final_sanction"),
+    Transition(KIND_NEW, AWAITING_DIRECTOR_SELF_SANCTION, ACTOR_SANCTIONING,
+               "sanction_approve", APPROVED, task="final_sanction"),
+    Transition(KIND_NEW, AWAITING_DIRECTOR_SELF_SANCTION, ACTOR_SANCTIONING,
+               "sanction_reject", REJECTED, task="final_sanction"),
 )
 
 # -- cancellation of approved leave (CW-EL-02) -----------------------------
@@ -159,10 +169,15 @@ CANCELLATION = (
 # -- extension of ongoing leave (CW-EL-03) ---------------------------------
 
 EXTENSION = (
-    # Substitute consent gate, where coverage is required.
+    # Substitute consent gate, where coverage is required. On the
+    # Director's own extension the accepted consent re-enters at the
+    # final state (the extension analogue of BW-EL-08).
     Transition(KIND_EXTENSION, AWAITING_EXTENSION_SUBSTITUTE,
                ACTOR_SUBSTITUTE, "substitute_accepted",
                AWAITING_EXTENSION_UNIT_HEAD, task="substitute_response"),
+    Transition(KIND_EXTENSION, AWAITING_EXTENSION_SUBSTITUTE,
+               ACTOR_SUBSTITUTE, "substitute_accepted_director",
+               EXTENSION_PENDING_FINAL, task="substitute_response"),
     Transition(KIND_EXTENSION, AWAITING_EXTENSION_SUBSTITUTE,
                ACTOR_SUBSTITUTE, "substitute_declined",
                EXTENSION_APPLICANT_ACTION_REQUIRED,
@@ -262,10 +277,20 @@ def initial_state(kind: str, *, substitute_required: bool = False,
     New applications start as drafts; cancellation and extension
     requests are born already in their first review state (their
     "submission" *is* the review request), with the substitute
-    consent gate first when coverage is required.
+    consent gate first when coverage is required. A derived
+    request on the Director self-sanction path (BR-EL-019) is
+    born straight at the final decision state of its kind — the
+    Director is nobody's Unit Head, so a lower stop would
+    deadlock the workflow.
     """
     if kind == KIND_NEW:
         return DRAFT
+    if director_path:
+        if kind == KIND_CANCELLATION:
+            return CANCELLATION_PENDING_FINAL
+        if substitute_required:
+            return AWAITING_EXTENSION_SUBSTITUTE
+        return EXTENSION_PENDING_FINAL
     if kind == KIND_CANCELLATION:
         return CANCELLATION_PENDING_UNIT_HEAD
     if substitute_required:

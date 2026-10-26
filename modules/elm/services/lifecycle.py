@@ -26,6 +26,7 @@ from modules.elm.domain.leave_types import (
     KIND_EXTENSION,
     KIND_NEW,
     RESUMPTION_REVIEW_PENDING,
+    TERMINAL_STATES,
     VL,
 )
 from modules.elm.domain.policy import (
@@ -34,9 +35,11 @@ from modules.elm.domain.policy import (
     intervals_overlap,
 )
 from modules.elm.models import (
+    EmployeeProfile,
     LeaveRecord,
     LeaveRequest,
     Resumption,
+    VacationPeriod,
 )
 from modules.elm.selectors.requests import closed_dates
 from modules.elm.services import authz, workflow
@@ -70,11 +73,26 @@ def request_cancellation(principal, *,
             "Only leave that is still in force can be "
             "cancelled.", code="leave_not_active")
 
-    effective = effective_date or timezone.now().date()
-    if effective < timezone.now().date():
+    today = timezone.now().date()
+    effective = effective_date or today
+    if effective < today:
         raise ConflictError(
             "A cancellation cannot be backdated.",
             code="invalid_effective_date")
+    if LeaveRequest.objects.filter(
+            kind=KIND_CANCELLATION, base_request=base).exclude(
+                status__in=TERMINAL_STATES).exists():
+        raise ConflictError(
+            "A cancellation for this leave is already "
+            "pending.", code="cancellation_pending")
+    # BR-EL-023: cancellation is admissible only before the
+    # leave's start date — once it has begun, extension or
+    # resumption applies, not cancellation.
+    if today >= record.start_date:
+        raise ConflictError(
+            "Approved leave may be cancelled only before its "
+            "start date; it has already begun.",
+            code="leave_already_started")
     if effective > record.end_date:
         raise ConflictError(
             "The approved leave has already ended.",
@@ -84,7 +102,9 @@ def request_cancellation(principal, *,
     request = LeaveRequest.objects.create(
         user_id=principal.user_id, kind=KIND_CANCELLATION,
         category=base.category, base_request=base,
-        status="cancellation_pending_unit_head_review",
+        status=workflow.machine.initial_state(
+            KIND_CANCELLATION,
+            director_path=workflow.route_is_director(base)),
         start_date=effective, end_date=record.end_date,
         purpose=(f"Cancellation of approved {base.category} "
                  f"leave ({base.start_date} → {base.end_date})"),
@@ -95,7 +115,7 @@ def request_cancellation(principal, *,
     )
     workflow._log(
         request, "state_change",
-        to_status="cancellation_pending_unit_head_review",
+        to_status=request.status,
         actor=principal.user_id,
         actor_label=authz.user_label(principal),
         outcome="cancellation_requested", reason=reason)
@@ -143,6 +163,24 @@ def request_extension(principal, *, base_request_id: int,
         raise ConflictError(
             "The ongoing leave is no longer in force.",
             code="leave_not_active")
+
+    profile = authz.employee_profile(principal.user_id)
+    if base.category == VL and (
+            profile is None
+            or profile.employee_kind != "faculty"):
+        raise ConflictError(
+            "Vacation Leave applies to faculty only.",
+            code="category_not_applicable")
+    # BR-EL-006 rides along: a VL extension must sit inside
+    # a published vacation period, exactly like a VL
+    # application.
+    if base.category == VL and not VacationPeriod.objects.filter(
+            start_date__lte=start_date,
+            end_date__gte=end_date).exists():
+        raise ConflictError(
+            "A vacation-leave extension must stay inside a "
+            "published Academic Calendar vacation period.",
+            code="calendar_violation")
     if start_date != record.end_date + timedelta(days=1):
         raise ConflictError(
             "An extension must continue the approved leave "
@@ -152,14 +190,6 @@ def request_extension(principal, *, base_request_id: int,
         raise ConflictError(
             "The extension period ends before it starts.",
             code="invalid_period")
-
-    profile = authz.employee_profile(principal.user_id)
-    if base.category == VL and (
-            profile is None
-            or profile.employee_kind != "faculty"):
-        raise ConflictError(
-            "Vacation Leave applies to faculty only.",
-            code="category_not_applicable")
 
     interval = LeaveInterval(
         category=base.category, start=start_date,
@@ -235,7 +265,8 @@ def request_extension(principal, *, base_request_id: int,
             nominee_user_id=substitute_user_id)
 
     request.status = workflow.machine.initial_state(
-        KIND_EXTENSION, substitute_required=substitute_required)
+        KIND_EXTENSION, substitute_required=substitute_required,
+        director_path=workflow.route_is_director(base))
     request.save()
     workflow._log(
         request, "state_change",
@@ -290,16 +321,37 @@ def submit_resumption(principal, *, record_id: int,
         actual_resumption_date=actual_resumption_date,
         details=details,
     )
-    # The applicable Sanctioning Authority reviews — the
-    # person who sanctioned the leave, when the record
-    # came through ELM.
-    assignee = None
+    # BR-EL-027: the applicable Sanctioning Authority reviews —
+    # the person who sanctioned the leave when it went
+    # through ELM; the holders of the recorded authority's
+    # designation when the leave was entered offline. With
+    # nobody able to review, the submission fails closed
+    # rather than deadlocking in review_pending.
     base_request = record.source_request
     if base_request is not None:
-        assignee = base_request.decided_by_user_id
-    if assignee is None:
-        assignee = record.user_id
-    workflow.create_resumption_task(resumption, assignee)
+        if base_request.decided_by_user_id is None:
+            raise ConflictError(
+                "The application behind this leave has no "
+                "recorded final decision, so no Sanctioning "
+                "Authority can review the resumption.",
+                code="no_sanctioning_authority")
+        assignees = [base_request.decided_by_user_id]
+    else:
+        offline = record.offline_record
+        assignees = sorted(
+            EmployeeProfile.objects.filter(
+                is_active=True,
+                designation_name=(
+                    offline.sanctioning_authority
+                    if offline is not None else "")).values_list(
+                        "user_id", flat=True))
+    if not assignees:
+        raise ConflictError(
+            "No active employee holds the Sanctioning "
+            "Authority designation recorded for this leave, "
+            "so nobody can review the resumption.",
+            code="no_sanctioning_authority")
+    workflow.create_resumption_task(resumption, assignees)
     return resumption
 
 
@@ -309,8 +361,8 @@ def review_resumption(resumption: Resumption, principal, *,
                         reason: str = "") -> Resumption:
     """Review a resumption as the applicable authority.
 
-    ``normal``  — resumed the day after the approved end:
-                  no adjustment.
+    ``normal``  — resumed on the approved end date: no
+                  adjustment.
     ``early``   — resumed before the end: the unused days
                   are restored to the balance.
     ``late``    — resumed after the end: the extra days are
@@ -325,24 +377,41 @@ def review_resumption(resumption: Resumption, principal, *,
 
     record = resumption.record
     base_request = record.source_request
-    expected_return = record.end_date + timedelta(days=1)
+    expected_return = record.end_date
     actual = resumption.actual_resumption_date
 
     # The reviewer is the authority who sanctioned this
     # leave, or — for an offline-recorded leave — whoever
-    # holds the review permission and the matching
-    # designation.
-    if (base_request is not None
-            and principal.user_id != base_request.decided_by_user_id):
-        final_step = (list(base_request.route
-                           or [{}]))[-1]
+    # holds the recorded Sanctioning Authority designation.
+    if base_request is not None:
+        if (principal.user_id
+                != base_request.decided_by_user_id):
+            final_step = (list(base_request.route
+                               or [{}]))[-1]
+            if not authz.is_final_authority(
+                    principal,
+                    final_step.get("authority") or ""):
+                raise PermissionDeniedError(
+                    "This resumption is reviewed by the "
+                    "authority who sanctioned the leave.",
+                    code="not_actor")
+    else:
+        offline = record.offline_record
         if not authz.is_final_authority(
                 principal,
-                final_step.get("authority") or ""):
+                offline.sanctioning_authority
+                if offline is not None else ""):
             raise PermissionDeniedError(
-                "This resumption is reviewed by the "
-                "authority who sanctioned the leave.",
+                "This resumption is reviewed by whoever "
+                "holds the Sanctioning Authority "
+                "designation recorded for the leave.",
                 code="not_actor")
+
+    # BR-EL-028: the resumption date is the first day back
+    # on duty. Normal is resuming on the approved end date
+    # — no adjustment; early restores the unused span
+    # (actual → end date); late charges the extra span
+    # (end date + 1 → the day before resumption).
     if outcome == "normal":
         if actual != expected_return:
             raise ConflictError(
@@ -379,7 +448,7 @@ def review_resumption(resumption: Resumption, principal, *,
                 "return date.", code="resumption_mismatch")
         interval = LeaveInterval(
             category=record.category,
-            start=expected_return,
+            start=record.end_date + timedelta(days=1),
             end=actual - timedelta(days=1))
         adjustment = -count_days(
             interval, closed=closed_dates())
@@ -417,14 +486,16 @@ def review_resumption(resumption: Resumption, principal, *,
     resumption.reviewed_at = timezone.now()
     resumption.sync_note = sync
     resumption.save()
-    workflow._log(
-        base_request if base_request is not None
-        else _request_for_record(record),
-        "state_change",
-        to_status="resumption_reviewed",
-        actor=principal.user_id,
-        actor_label=authz.user_label(principal),
-        outcome=reviewed, reason=reason or sync)
+    logged_request = (base_request if base_request is not None
+                      else _request_for_record(record))
+    if logged_request is not None:
+        workflow._log(
+            logged_request,
+            "state_change",
+            to_status="resumption_reviewed",
+            actor=principal.user_id,
+            actor_label=authz.user_label(principal),
+            outcome=reviewed, reason=reason or sync)
     return resumption
 
 

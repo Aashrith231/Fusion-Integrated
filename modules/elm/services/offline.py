@@ -18,7 +18,6 @@ from django.db import transaction
 from django.utils import timezone
 
 from core.api.exceptions import ConflictError
-from modules.elm.domain.errors import RecordInconsistent
 from modules.elm.domain.policy import (
     LeaveInterval,
     count_days,
@@ -90,9 +89,10 @@ def record_offline(principal, *, user_id: int,
                  "start": str(record.start_date),
                  "end": str(record.end_date)})
     if overlaps:
-        raise RecordInconsistent(
+        raise ConflictError(
             "The entry overlaps leave already on record.",
-        )
+            code="record_inconsistent",
+            details=[{"overlaps": overlaps}])
 
     entry = OfflineLeaveRecord.objects.create(
         user_id=user_id, category=category,
@@ -143,11 +143,3 @@ def record_offline(principal, *, user_id: int,
                  "record_id": record.id,
                  "days": str(days)})
     return entry
-
-
-def _translate(exc: Exception) -> Exception:
-    if isinstance(exc, RecordInconsistent):
-        return ConflictError(
-            str(exc), code="record_inconsistent",
-            details=[])
-    return exc
