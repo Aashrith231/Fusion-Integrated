@@ -157,7 +157,7 @@ class SubstituteNominationSerializer(
 class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = LeaveTask
-        fields = ["id", "request", "task_class",
+        fields = ["id", "request", "resumption", "task_class",
                   "assignee_user_id", "assignee_role",
                   "status", "outcome", "reason",
                   "reminder_at", "escalation_at",
@@ -212,7 +212,7 @@ class TaskWithRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LeaveTask
-        fields = ["id", "request", "task_class",
+        fields = ["id", "request", "resumption", "task_class",
                   "assignee_user_id", "assignee_role",
                   "status", "outcome", "reason",
                   "reminder_at", "escalation_at",
@@ -365,6 +365,7 @@ class LeaveRecordSummarySerializer(
                   "category", "start_date", "end_date",
                   "start_half", "end_half", "days",
                   "status", "station_leave",
+                  "source_request",
                   "actual_end_date", "created_at"]
 
 

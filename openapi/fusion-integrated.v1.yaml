@@ -4053,6 +4053,9 @@ components:
           $ref: '#/components/schemas/LeaveRecordStatusEnum'
         station_leave:
           type: boolean
+        source_request:
+          type: integer
+          nullable: true
         actual_end_date:
           type: string
           format: date
@@ -5819,6 +5822,9 @@ components:
           nullable: true
           description: Null for resumption tasks on offline-recorded leave, which
             has no application
+        resumption:
+          type: integer
+          nullable: true
         task_class:
           $ref: '#/components/schemas/TaskClassEnum'
         assignee_user_id:
@@ -5889,6 +5895,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/LeaveRequest'
           readOnly: true
+        resumption:
+          type: integer
+          nullable: true
         task_class:
           $ref: '#/components/schemas/TaskClassEnum'
         assignee_user_id:

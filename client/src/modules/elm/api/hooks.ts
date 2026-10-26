@@ -9,7 +9,7 @@ import {
 import { http } from "../../../lib/http";
 import type {
   ApplicationPayload, Balance, ElmContext, HolidayCalendar,
-  LeaveRecordItem, LeaveRequest, Page, TaskWithRequest,
+  LeaveRecordItem, LeaveRequest, Page, ResumptionItem, TaskWithRequest,
 } from "./types";
 
 const KEY = "elm";
@@ -179,6 +179,40 @@ export function useSubmitResumption() {
     mutationFn: async (payload: {
       record_id: number; actual_resumption_date: string; details?: string;
     }) => (await http.post("/elm/resumptions", payload)).data,
+    onSuccess: () => invalidateAll(qc),
+  });
+}
+
+export function useReviewResumption() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      { id, outcome, reason }:
+        { id: number; outcome: string; reason?: string },
+    ) =>
+      (await http.post<ResumptionItem>(
+        `/elm/resumptions/${id}/review`, { outcome, reason })).data,
+    onSuccess: () => invalidateAll(qc),
+  });
+}
+
+// -- drafts ---------------------------------------------------------------------
+export function useSubmitDraft() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      { id, substitute_required, substitute_user_id, reason }: {
+        id: number;
+        substitute_required?: boolean;
+        substitute_user_id?: number | null;
+        reason?: string;
+      },
+    ) =>
+      (await http.post<LeaveRequest>(`/elm/requests/${id}/submit`, {
+        substitute_required,
+        substitute_user_id,
+        reason,
+      })).data,
     onSuccess: () => invalidateAll(qc),
   });
 }

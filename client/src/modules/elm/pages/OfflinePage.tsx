@@ -8,6 +8,7 @@ import { notifications } from "@mantine/notifications";
 import { errorMessage } from "../../../lib/http";
 import { PageHeader } from "../../../ui/components/PageHeader";
 import { useRecordOffline } from "../api/hooks";
+import { isoDate } from "../api/dates";
 
 const CATEGORIES = ["CL", "RH", "SCL", "EL", "COL", "VL"];
 
@@ -35,10 +36,10 @@ export default function OfflinePage() {
       {
         user_id: Number(form.user_id),
         category: form.category,
-        start_date: form.start_date.toISOString().slice(0, 10),
-        end_date: form.end_date.toISOString().slice(0, 10),
+        start_date: isoDate(form.start_date)!,
+        end_date: isoDate(form.end_date)!,
         sanction_reference: form.sanction_reference,
-        sanction_date: form.sanction_date.toISOString().slice(0, 10),
+        sanction_date: isoDate(form.sanction_date)!,
         sanctioning_authority: form.sanctioning_authority,
         evidence_description: form.evidence_description,
         reason_elm_unavailable: form.reason_elm_unavailable,

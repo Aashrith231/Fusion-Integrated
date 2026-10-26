@@ -33,7 +33,12 @@ export interface SubstituteNomination {
 
 export interface LeaveTask {
   id: number;
-  request: number | LeaveRequest;
+  /** The request behind the task — null for resumption tasks on
+   *  offline-recorded leave. */
+  request: number | LeaveRequest | null;
+  /** The resumption this task reviews (resumption_review tasks);
+   *  null for ordinary workflow tasks. */
+  resumption?: number | null;
   task_class: string;
   assignee_user_id: number;
   assignee_role: string;
@@ -90,7 +95,24 @@ export interface LeaveRequest {
 }
 
 export interface TaskWithRequest extends LeaveTask {
-  request: LeaveRequest;
+  /** Null for resumption tasks on offline-recorded leave —
+   *  such a task stands alone, pointing at the resumption. */
+  request: LeaveRequest | null;
+}
+
+export interface ResumptionItem {
+  id: number;
+  record: number;
+  request: number | null;
+  actual_resumption_date: string;
+  details: string;
+  status: "review_pending" | "reviewed_normal" | "reviewed_early"
+    | "reviewed_late";
+  reviewed_by_user_id: number | null;
+  reviewed_at: string | null;
+  adjustment_days: string | null;
+  sync_note: string;
+  created_at: string;
 }
 
 export interface LeaveRecordItem {
@@ -105,6 +127,9 @@ export interface LeaveRecordItem {
   days: string;
   status: "ongoing" | "completed" | "cancelled";
   station_leave: boolean;
+  /** The application behind the record — null for
+   *  offline-recorded leave. */
+  source_request: number | null;
   actual_end_date: string | null;
   created_at: string;
 }

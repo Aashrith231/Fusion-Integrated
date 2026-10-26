@@ -11,7 +11,10 @@ import { ErrorState } from "../../../ui/components/ErrorState";
 import { FormModal } from "../../../ui/components/FormModal";
 import { PageHeader } from "../../../ui/components/PageHeader";
 import { StatusBadge } from "../../../ui/components/StatusBadge";
-import { useCreateApplication, useRequests, useWithdraw } from "../api/hooks";
+import {
+  useCreateApplication, useRequests, useSubmitDraft, useWithdraw,
+} from "../api/hooks";
+import { isoDate } from "../api/dates";
 import type { LeaveRequest } from "../api/types";
 
 const CATEGORIES = ["CL", "RH", "SCL", "EL", "COL", "VL"];
@@ -20,6 +23,7 @@ export default function RequestsPage() {
   const { data, isPending, error } = useRequests();
   const create = useCreateApplication();
   const withdraw = useWithdraw();
+  const submitDraft = useSubmitDraft();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     category: "CL",
@@ -30,29 +34,54 @@ export default function RequestsPage() {
     purpose: "",
     station_leave: false,
     destination: "",
+    travel_from: null as Date | null,
+    travel_to: null as Date | null,
   });
 
   if (error) return <Container size="xl"><ErrorState error={error} /></Container>;
 
   const items: LeaveRequest[] = data?.results ?? [];
 
+  function setCategory(category: string) {
+    // Half days exist only for Casual Leave (BR-EL-010): picking
+    // another category resets them so a stale half never rides along.
+    setForm({
+      ...form,
+      category,
+      ...(category !== "CL" && { start_half: "full", end_half: "full" }),
+    });
+  }
+
   function submit() {
     if (!form.start_date || !form.end_date) {
       notifications.show({ color: "red", title: "Dates required", message: "Pick the leave period." });
       return;
     }
+    const stationDetails = form.station_leave
+      ? {
+        destination: form.destination,
+        from: isoDate(form.travel_from),
+        to: isoDate(form.travel_to),
+      }
+      : {};
+    if (form.station_leave && (!form.destination || !form.travel_from
+      || !form.travel_to)) {
+      notifications.show({
+        color: "red", title: "Station leave incomplete",
+        message: "A destination and travel dates are required.",
+      });
+      return;
+    }
     create.mutate(
       {
         category: form.category,
-        start_date: form.start_date.toISOString().slice(0, 10),
-        end_date: form.end_date.toISOString().slice(0, 10),
+        start_date: isoDate(form.start_date)!,
+        end_date: isoDate(form.end_date)!,
         start_half: form.start_half,
         end_half: form.end_half,
         purpose: form.purpose,
         station_leave: form.station_leave,
-        station_details: form.station_leave
-          ? { destination: form.destination }
-          : {},
+        station_details: stationDetails,
       },
       {
         onSuccess: () => {
@@ -92,6 +121,24 @@ export default function RequestsPage() {
                 </Text>
               )}
               <Group mt="xs">
+                {r.status === "draft" && (
+                  <Button size="xs" variant="light"
+                    onClick={() => submitDraft.mutate(
+                      { id: r.id },
+                      {
+                        onSuccess: () => notifications.show({
+                          color: "green", title: "Submitted",
+                          message: "The draft entered the approval chain.",
+                        }),
+                        onError: (e) => notifications.show({
+                          color: "red", title: "Could not submit",
+                          message: errorMessage(e),
+                        }),
+                      })}
+                  >
+                    Submit
+                  </Button>
+                )}
                 {r.status !== "approved" && r.status !== "rejected"
                   && r.status !== "withdrawn" && (
                   <Button
@@ -127,7 +174,7 @@ export default function RequestsPage() {
           <Select
             label="Category" data={CATEGORIES}
             value={form.category}
-            onChange={(v) => setForm({ ...form, category: v ?? "CL" })}
+            onChange={(v) => setCategory(v ?? "CL")}
           />
           <Group grow>
             <DateInput
@@ -143,11 +190,13 @@ export default function RequestsPage() {
             <Select
               label="Start half" data={["full", "first", "second"]}
               value={form.start_half}
+              disabled={form.category !== "CL"}
               onChange={(v) => setForm({ ...form, start_half: v ?? "full" })}
             />
             <Select
               label="End half" data={["full", "first", "second"]}
               value={form.end_half}
+              disabled={form.category !== "CL"}
               onChange={(v) => setForm({ ...form, end_half: v ?? "full" })}
             />
           </Group>
@@ -161,10 +210,22 @@ export default function RequestsPage() {
             onChange={(e) => setForm({ ...form, station_leave: e.currentTarget.checked })}
           />
           {form.station_leave && (
-            <TextInput
-              label="Destination" value={form.destination}
-              onChange={(e) => setForm({ ...form, destination: e.target.value })}
-            />
+            <>
+              <TextInput
+                label="Destination" value={form.destination}
+                onChange={(e) => setForm({ ...form, destination: e.target.value })}
+              />
+              <Group grow>
+                <DateInput
+                  label="Travel from" value={form.travel_from}
+                  onChange={(d) => setForm({ ...form, travel_from: d })}
+                />
+                <DateInput
+                  label="Travel to" value={form.travel_to}
+                  onChange={(d) => setForm({ ...form, travel_to: d })}
+                />
+              </Group>
+            </>
           )}
         </Stack>
       </FormModal>
