@@ -245,6 +245,8 @@ SPECTACULAR_SETTINGS = {
             "modules.elm.domain.leave_types.UNIT_TYPE_CHOICES",
         "HierarchyCategoryGroupEnum":
             "modules.elm.domain.leave_types.CATEGORY_GROUP_CHOICES",
+        "TaskClassEnum":
+            "modules.elm.models.LeaveTask.TASK_CLASSES",
     },
 }
 

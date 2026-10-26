@@ -4,6 +4,7 @@ from datetime import date
 from decimal import Decimal as D
 
 import pytest
+
 from core.api.exceptions import ConflictError, PermissionDeniedError
 
 from .support import (
@@ -16,19 +17,21 @@ from .support import (
 
 pytestmark = pytest.mark.django_db
 
-START, END = date(2026, 2, 16), date(2026, 2, 20)   # Mon–Fri, in the past
+START, END = date(2026, 2, 16), date(2026, 2, 20)   # Mon-Fri, in the past
 
 
 def record_offline(principal_=None, **overrides):
     from modules.elm.services import offline as offline_service
 
-    fields = dict(
-        user_id=APP, category="CL", start_date=START, end_date=END,
-        sanction_reference="FILE/2026/001", sanction_date=date(2026, 2, 10),
-        sanctioning_authority="Deputy Registrar (Estt.)",
-        evidence_description="Paper file with the sanction order",
-        reason_elm_unavailable="ELM was offline that week",
-    )
+    fields = {
+        "user_id": APP, "category": "CL",
+        "start_date": START, "end_date": END,
+        "sanction_reference": "FILE/2026/001",
+        "sanction_date": date(2026, 2, 10),
+        "sanctioning_authority": "Deputy Registrar (Estt.)",
+        "evidence_description": "Paper file with the sanction order",
+        "reason_elm_unavailable": "ELM was offline that week",
+    }
     fields.update(overrides)
     return offline_service.record_offline(principal_ or admin(), **fields)
 
@@ -37,10 +40,9 @@ class TestOfflineRecords:
 
     def test_recording_posts_the_ledger_and_the_book(self, world):
         entry = record_offline()
-        assert entry.days == D("5")             # Mon–Fri, no holidays
+        assert entry.days == D("5")             # Mon-Fri, no holidays
         assert entry.consistency_check["overlaps"] == []
-        from modules.elm.models import LeaveAccount, LeaveRecord, \
-            LeaveTransaction
+        from modules.elm.models import LeaveAccount, LeaveRecord, LeaveTransaction
 
         record = LeaveRecord.objects.get(id=entry.leave_record_id)
         assert record.status == "ongoing"
@@ -72,7 +74,6 @@ class TestOfflineRecords:
 
     def test_entry_must_not_contradict_the_book(self, world):
         """An overlapping ongoing record fails the consistency check."""
-        from modules.elm.services import offline as offline_service
         from modules.elm.models import LeaveRecord
 
         LeaveRecord.objects.create(

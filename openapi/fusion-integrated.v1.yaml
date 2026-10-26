@@ -180,13 +180,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Hierarchy'
+              $ref: '#/components/schemas/HierarchyWrite'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Hierarchy'
+              $ref: '#/components/schemas/HierarchyWrite'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Hierarchy'
+              $ref: '#/components/schemas/HierarchyWrite'
         required: true
       security:
       - iamSession: []
@@ -219,13 +219,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Policy'
+              $ref: '#/components/schemas/PolicyWrite'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Policy'
+              $ref: '#/components/schemas/PolicyWrite'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Policy'
+              $ref: '#/components/schemas/PolicyWrite'
       security:
       - iamSession: []
       responses:
@@ -322,13 +322,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Sla'
+              $ref: '#/components/schemas/SlaWrite'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Sla'
+              $ref: '#/components/schemas/SlaWrite'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Sla'
+              $ref: '#/components/schemas/SlaWrite'
         required: true
       security:
       - iamSession: []
@@ -3640,14 +3640,6 @@ components:
       - designation_name
       - employee_kind
       - user_id
-    EscalationActionEnum:
-      enum:
-      - notify
-      - reassign
-      type: string
-      description: |-
-        * `notify` - Notify the configured authority
-        * `reassign` - Notify and reassign the task
     Extension:
       type: object
       properties:
@@ -3724,6 +3716,31 @@ components:
       description: |-
         * `cl_rh` - CL / RH — Unit Head final
         * `higher_sanction` - SCL / EL / COL / VL — higher sanction
+    HierarchyWrite:
+      type: object
+      properties:
+        category_group:
+          $ref: '#/components/schemas/HierarchyWriteCategoryGroupEnum'
+        unit_type:
+          $ref: '#/components/schemas/UnitTypeEnum'
+        establishment_required:
+          type: boolean
+        sanctioning_authority:
+          type: string
+          maxLength: 120
+      required:
+      - category_group
+      - establishment_required
+      - sanctioning_authority
+      - unit_type
+    HierarchyWriteCategoryGroupEnum:
+      enum:
+      - cl_rh
+      - higher_sanction
+      type: string
+      description: |-
+        * `cl_rh` - cl_rh
+        * `higher_sanction` - higher_sanction
     Holiday:
       type: object
       properties:
@@ -4831,6 +4848,32 @@ components:
           readOnly: true
       required:
       - updated_at
+    PolicyWrite:
+      type: object
+      description: A partial policy update — every field optional.
+      properties:
+        entitlements:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties: {}
+        director_designations:
+          type: array
+          items:
+            type: string
+            maxLength: 120
+        establishment_designations:
+          type: array
+          items:
+            type: string
+            maxLength: 120
+        year_end_month_day:
+          type: string
+          pattern: ^\d{2}-\d{2}$
+        station_leave_enabled:
+          type: boolean
+        medical_evidence_required:
+          type: boolean
     ProfileDocument:
       type: object
       description: |-
@@ -5507,12 +5550,20 @@ components:
           maximum: 2147483647
           minimum: 0
         escalation_action:
-          $ref: '#/components/schemas/EscalationActionEnum'
+          $ref: '#/components/schemas/SlaEscalationActionEnum'
         escalation_target_role:
           type: string
           maxLength: 120
       required:
       - task_class
+    SlaEscalationActionEnum:
+      enum:
+      - notify
+      - reassign
+      type: string
+      description: |-
+        * `notify` - Notify the configured authority
+        * `reassign` - Notify and reassign the task
     SlaSweepReport:
       type: object
       properties:
@@ -5523,6 +5574,51 @@ components:
       required:
       - escalated
       - reminded
+    SlaWrite:
+      type: object
+      properties:
+        task_class:
+          $ref: '#/components/schemas/SlaWriteTaskClassEnum'
+        reminder_hours:
+          type: integer
+          minimum: 1
+        escalation_hours:
+          type: integer
+          minimum: 1
+        escalation_action:
+          allOf:
+          - $ref: '#/components/schemas/SlaWriteEscalationActionEnum'
+          default: notify
+        escalation_target_role:
+          type: string
+          default: ''
+          maxLength: 120
+      required:
+      - escalation_hours
+      - reminder_hours
+      - task_class
+    SlaWriteEscalationActionEnum:
+      enum:
+      - notify
+      - reassign
+      type: string
+      description: |-
+        * `notify` - notify
+        * `reassign` - reassign
+    SlaWriteTaskClassEnum:
+      enum:
+      - substitute_response
+      - unit_head_review
+      - establishment_routing
+      - final_sanction
+      - resumption_review
+      type: string
+      description: |-
+        * `substitute_response` - substitute_response
+        * `unit_head_review` - unit_head_review
+        * `establishment_routing` - establishment_routing
+        * `final_sanction` - final_sanction
+        * `resumption_review` - resumption_review
     SourceEnum:
       enum:
       - campus

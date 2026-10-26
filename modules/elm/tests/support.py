@@ -13,14 +13,13 @@ workflow's ``timezone.now()`` calls are deterministic:
 from __future__ import annotations
 
 from datetime import date
-from decimal import Decimal as D
 
 import pytest
 from django.utils import timezone
 from freezegun import freeze_time
-from fusion_auth.client import UserRef
 
-from conftest import make_principal, make_session
+from conftest import make_principal
+from fusion_auth.client import UserRef
 from modules.elm.models import (
     EmployeeProfile,
     HierarchyConfig,

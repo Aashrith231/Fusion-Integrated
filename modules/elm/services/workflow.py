@@ -397,7 +397,6 @@ def _account_for(request: LeaveRequest) -> LeaveAccount:
     approval time would carry zero entitlement and show a
     negative balance.
     """
-    from modules.elm.selectors import balances as balance_selector
 
     account, created = LeaveAccount.objects.get_or_create(
         user_id=request.user_id, leave_year=request.leave_year,

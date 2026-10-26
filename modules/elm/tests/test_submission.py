@@ -11,7 +11,6 @@ from core.api.exceptions import ConflictError, PermissionDeniedError
 from .support import (
     APP,
     CLOSED_HOLIDAY,
-    DIRECTOR,
     FACULTY,
     HEAD,
     RESTRICTED_HOLIDAY,
@@ -52,7 +51,7 @@ class TestHappyPaths:
     def test_staff_cl_week_skipping_a_closed_holiday(self, world):
         request = apply(applicant())
         assert request.status == "awaiting_unit_head_review"
-        assert request.days == D("4")          # Mon–Fri minus closed Thu
+        assert request.days == D("4")          # Mon-Fri minus closed Thu
         assert request.leave_year == world["leave_year"]
         # The route snapshot names the Unit Head as final authority.
         assert request.route == [{"role": "unit_head",
@@ -87,7 +86,7 @@ class TestHappyPaths:
 
     def test_half_day_cl(self, world):
         request = apply(applicant(), start_half="first")
-        assert request.days == D("3.5")        # 4 working days − ½
+        assert request.days == D("3.5")        # 4 working days - 1/2
 
     def test_director_self_sanctions_their_own_application(self, world):
         p = director()
@@ -147,7 +146,7 @@ class TestPeriodAndCalendar:
         assert err.value.code == "invalid_period"
 
     def test_period_with_no_countable_days(self, world):
-        # Saturday–Sunday: nothing counts for CL.
+        # Sat-Sun: nothing counts for CL.
         with pytest.raises(ConflictError) as err:
             apply(applicant(), start=date(2026, 3, 7), end=date(2026, 3, 8))
         assert err.value.code == "calendar_violation"
@@ -163,7 +162,6 @@ class TestBalanceAndOverlap:
 
     def test_insufficient_balance(self, world):
         from modules.elm.models import LeaveAccount
-        from modules.elm.services import policy as policy_service
 
         account = LeaveAccount.objects.get(
             user_id=APP, category="CL", leave_year=world["leave_year"])
@@ -266,7 +264,6 @@ class TestEntitlements:
 
     def test_faculty_el_comes_only_from_vl_conversion(self, world):
         from modules.elm.models import LeaveAccount
-
         from modules.elm.services import policy as policy_service
 
         account = LeaveAccount.objects.get(

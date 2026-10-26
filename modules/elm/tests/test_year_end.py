@@ -1,9 +1,9 @@
 """Year-end leave processing (EL-UC-020): lapse, conversion,
 carry-forward, the ledger, and the exceptions report."""
-from datetime import date
 from decimal import Decimal as D
 
 import pytest
+
 from core.api.exceptions import ConflictError
 
 from .support import (
@@ -51,8 +51,9 @@ class TestYearEndRun:
         lapsed = LeaveTransaction.objects.filter(
             kind="year_end_lapse", account__user_id=APP)
         assert {t.account.category for t in lapsed} == {"CL", "RH", "SCL"}
-        cl = [t for t in lapsed if t.account.category == "CL"][0]
-        assert cl.delta == D("-5")              # 8 entitled − 3 used
+        cl = next(t for t in lapsed
+                  if t.account.category == "CL")
+        assert cl.delta == D("-5")              # 8 entitled - 3 used
 
         # The closing accounts read zero, the new year starts fresh.
         from modules.elm.models import LeaveAccount

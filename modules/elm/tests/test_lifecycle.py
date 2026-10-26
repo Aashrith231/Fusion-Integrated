@@ -4,13 +4,12 @@ from datetime import date
 from decimal import Decimal as D
 
 import pytest
-from core.api.exceptions import ConflictError, NotFoundError, \
-    PermissionDeniedError
+
+from core.api.exceptions import ConflictError, NotFoundError, PermissionDeniedError
 
 from .support import (
     APP,
     COLLEAGUE,
-    DIRECTOR,
     FACULTY,
     VACATION,
     applicant,
@@ -311,7 +310,6 @@ class TestResumption:
     def test_normal_resumption_is_the_approved_end_date(self, world):
         """BR-EL-028: actual == approved end date → reviewed with no
         adjustment to the period or the balance."""
-        from modules.elm.models import Resumption
         from modules.elm.services import lifecycle
 
         base = self.approved_el(world)
@@ -329,7 +327,6 @@ class TestResumption:
 
     def test_early_resumption_restores_the_unused_days_after_review(
             self, world):
-        from modules.elm.models import Resumption
         from modules.elm.services import lifecycle
 
         base = self.approved_el(world)
@@ -340,7 +337,7 @@ class TestResumption:
                                                outcome="early")
         assert reviewed.status == "reviewed_early"
         assert reviewed.adjustment_days == D("3")      # 18th, 19th, 20th
-        assert account_for(base).used_days == D("2")   # 5 − 3
+        assert account_for(base).used_days == D("2")   # 5 - 3
         base.leave_record.refresh_from_db()
         assert base.leave_record.actual_end_date == date(2026, 3, 18)
 
@@ -359,7 +356,6 @@ class TestResumption:
         assert account_for(base).used_days == D("7")
 
     def test_outcomes_must_match_the_actual_date(self, world):
-        from modules.elm.models import Resumption
         from modules.elm.services import lifecycle
 
         base = self.approved_el(world)

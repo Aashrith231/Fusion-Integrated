@@ -231,12 +231,12 @@ class ApplicationListView(
 
     def get_permissions(self):
         if self.request.method == "POST":
-            return [HasPermission(P_APPLY)()]
+            return [MODULE(), HasPermission(P_APPLY)()]
         # During schema generation there is no principal; assume the broader requirement.
         principal = _actor(self.request)
         if principal is None:
-            return [HasPermission(P_APPLY, P_VIEW_SELF)()]
-        return [HasPermission(P_VIEW_SELF)()]
+            return [MODULE(), HasPermission(P_APPLY, P_VIEW_SELF)()]
+        return [MODULE(), HasPermission(P_VIEW_SELF)()]
 
     def get_queryset(self):
         principal = _actor(self.request)
@@ -346,6 +346,18 @@ class ApplicationSubstituteView(APIView):
     def post(self, request, pk):
         principal = _actor(request)
         application = _own_request(request, pk)
+        # A substitute can be nominated (or replaced) only
+        # while the request actually awaits one — a
+        # terminal or in-review request is never silently
+        # given a stray nomination.
+        if application.status not in (
+                "awaiting_substitute_response",
+                "applicant_action_required",
+                "awaiting_extension_substitute_response",
+                "extension_applicant_action_required"):
+            raise ConflictError(
+                "This request is not awaiting a substitute "
+                "nomination.", code="invalid_transition")
         payload = s.SubstituteSerializer(
             data=request.data)
         payload.is_valid(raise_exception=True)
@@ -492,6 +504,15 @@ class TaskDecideView(APIView):
                 status="pending")
         except LeaveTask.DoesNotExist as exc:
             raise NotFoundError() from exc
+        if task.task_class == "resumption_review":
+            # A resumption task is answered through the
+            # resumption review endpoint — and for
+            # offline-recorded leave it has no request
+            # behind it at all.
+            raise ConflictError(
+                "Resumption tasks are answered through the "
+                "resumption review endpoint.",
+                code="invalid_transition")
         payload = s.DecisionSerializer(
             data=request.data)
         payload.is_valid(raise_exception=True)
@@ -627,8 +648,8 @@ class RecordListView(APIView):
         # principal; assume the narrower requirement.
         if principal is not None and principal.has_permission(
                 P_RECORDS_VIEW):
-            return []
-        return [HasPermission(P_VIEW_SELF)()]
+            return [MODULE()]
+        return [MODULE(), HasPermission(P_VIEW_SELF)()]
 
     @extend_schema(responses=s.LeaveRecordSummarySerializer(many=True))
     def get(self, request):
@@ -720,11 +741,14 @@ class AdminPolicyView(APIView):
             s.PolicySerializer(
                 admin_service.get_policy()).data)
 
-    @extend_schema(request=s.PolicySerializer, responses=s.PolicySerializer)
+    @extend_schema(request=s.PolicyWriteSerializer, responses=s.PolicySerializer)
     def put(self, request):
         principal = _actor(request)
+        payload = s.PolicyWriteSerializer(
+            data=request.data)
+        payload.is_valid(raise_exception=True)
         policy = admin_service.update_policy(
-            principal, **request.data)
+            principal, **payload.validated_data)
         return Response(
             s.PolicySerializer(policy).data)
 
@@ -740,11 +764,14 @@ class AdminHierarchyListView(APIView):
                 admin_service.hierarchy_rows(),
                 many=True).data)
 
-    @extend_schema(request=s.HierarchySerializer, responses=s.HierarchySerializer)
+    @extend_schema(request=s.HierarchyWriteSerializer, responses=s.HierarchySerializer)
     def post(self, request):
         principal = _actor(request)
+        payload = s.HierarchyWriteSerializer(
+            data=request.data)
+        payload.is_valid(raise_exception=True)
         row = admin_service.upsert_hierarchy(
-            principal, **request.data)
+            principal, **payload.validated_data)
         return Response(
             s.HierarchySerializer(row).data)
 
@@ -760,11 +787,14 @@ class AdminSlaListView(APIView):
                 admin_service.sla_rows(),
                 many=True).data)
 
-    @extend_schema(request=s.SlaSerializer, responses=s.SlaSerializer)
+    @extend_schema(request=s.SlaWriteSerializer, responses=s.SlaSerializer)
     def post(self, request):
         principal = _actor(request)
+        payload = s.SlaWriteSerializer(
+            data=request.data)
+        payload.is_valid(raise_exception=True)
         row = admin_service.upsert_sla(
-            principal, **request.data)
+            principal, **payload.validated_data)
         return Response(
             s.SlaSerializer(row).data)
 

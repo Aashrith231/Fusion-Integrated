@@ -260,6 +260,74 @@ class SlaSerializer(serializers.ModelSerializer):
                   "escalation_target_role"]
 
 
+# -- configuration write shapes ------------------------------------------
+# The admin endpoints validate the request body through these
+# serializers so malformed payloads answer 400 (the API
+# envelope), never a 500 from a service TypeError.
+
+
+class PolicyWriteSerializer(serializers.Serializer):
+    """A partial policy update — every field optional."""
+
+    entitlements = serializers.DictField(
+        child=serializers.DictField(), required=False)
+    director_designations = serializers.ListField(
+        child=serializers.CharField(max_length=120),
+        required=False)
+    establishment_designations = serializers.ListField(
+        child=serializers.CharField(max_length=120),
+        required=False)
+    year_end_month_day = serializers.RegexField(
+        regex=r"^\d{2}-\d{2}$", required=False)
+    station_leave_enabled = serializers.BooleanField(
+        required=False)
+    medical_evidence_required = serializers.BooleanField(
+        required=False)
+
+    def validate_entitlements(self, value):
+        from decimal import Decimal, InvalidOperation
+
+        for category, spec in value.items():
+            if not isinstance(spec, dict) or "annual_days" not in spec:
+                raise serializers.ValidationError(
+                    f"{category}: an entitlement entry needs an "
+                    f"'annual_days'.")
+            try:
+                annual = Decimal(str(spec["annual_days"]))
+            except (InvalidOperation, TypeError) as exc:
+                raise serializers.ValidationError(
+                    f"{category}: annual_days must be a "
+                    f"number.") from exc
+            if annual < 0:
+                raise serializers.ValidationError(
+                    f"{category}: annual_days cannot be negative.")
+        return value
+
+
+class HierarchyWriteSerializer(serializers.Serializer):
+    category_group = serializers.ChoiceField(
+        choices=["cl_rh", "higher_sanction"])
+    unit_type = serializers.ChoiceField(
+        choices=UNIT_TYPE_CHOICES)
+    establishment_required = serializers.BooleanField()
+    sanctioning_authority = serializers.CharField(
+        max_length=120)
+
+
+class SlaWriteSerializer(serializers.Serializer):
+    task_class = serializers.ChoiceField(
+        choices=["substitute_response", "unit_head_review",
+                 "establishment_routing", "final_sanction",
+                 "resumption_review"])
+    reminder_hours = serializers.IntegerField(min_value=1)
+    escalation_hours = serializers.IntegerField(min_value=1)
+    escalation_action = serializers.ChoiceField(
+        choices=["notify", "reassign"], default="notify")
+    escalation_target_role = serializers.CharField(
+        max_length=120, required=False, allow_blank=True,
+        default="")
+
+
 class HolidaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Holiday

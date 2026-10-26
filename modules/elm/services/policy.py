@@ -120,10 +120,8 @@ def leave_year_for(day, boundary_md: str | None = None) -> str:
     month, day_of_month = (int(part)
                            for part in boundary_md.split("-"))
     boundary = day.__class__(day.year, month, day_of_month)
-    if day > boundary:
-        closing_year = day.year + 1
-    else:
-        closing_year = day.year
+    closing_year = (day.year + 1 if day > boundary
+                    else day.year)
     # The year opened the day after the previous boundary.
     start = day.__class__(closing_year - 1,
                           month, day_of_month) + timedelta(days=1)
