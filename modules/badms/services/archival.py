@@ -27,7 +27,7 @@ from modules.badms.domain import policy, states
 from modules.badms.models import ArchivalDecision, ArchivalRequest
 from modules.badms.selectors import authz
 from modules.badms.services import audit as audit_service
-from modules.badms.services import notifications, storage
+from modules.badms.services import locking, notifications, storage
 
 log = logging.getLogger("fusion.badms.archival")
 
@@ -146,15 +146,19 @@ def decide_request(*, actor, request_id: int, decision: str,
     if decision not in ("approve", "reject"):
         raise DomainError("Decision must be approve or reject.",
                               code="invalid_decision")
-    try:
-        to_state = states.archival_transition(request.status,
-                                              "reject" if decision == "reject"
-                                              else "approve")
-    except ValueError as exc:
-        raise ConflictError(str(exc), code="invalid_state") from exc
 
     uid = getattr(actor, "user_id", 0) or 0
     with transaction.atomic():
+        request = locking.locked(ArchivalRequest.objects, request_id)
+        if request is None or not authz.in_department(actor, request.department):
+            raise PermissionDeniedError(
+                "This request belongs to another department.")
+        try:
+            to_state = states.archival_transition(
+                request.status,
+                "reject" if decision == "reject" else "approve")
+        except ValueError as exc:
+            raise ConflictError(str(exc), code="invalid_state") from exc
         request.status = to_state
         request.hod_decided_by_user_id = uid
         request.save(update_fields=["status", "hod_decided_by_user_id",
@@ -202,10 +206,6 @@ def classify_request(*, actor, request_id: int, classification: str,
     request = ArchivalRequest.objects.filter(pk=request_id).first()
     if request is None:
         raise LookupError("No such archival request.")
-    if request.status != "hod_approved":
-        raise ConflictError(
-            "Only a HoD-approved request can be classified.",
-            code="invalid_state")
     classification = (classification or "").strip().lower()
     if classification not in policy.CLASSIFICATIONS:
         raise DomainError(
@@ -213,6 +213,11 @@ def classify_request(*, actor, request_id: int, classification: str,
             code="invalid_classification")
 
     with transaction.atomic():
+        request = locking.locked(ArchivalRequest.objects, request_id)
+        if request is None or request.status != "hod_approved":
+            raise ConflictError(
+                "Only a HoD-approved request can be classified.",
+                code="invalid_state")
         request.classification = classification
         request.retention_rule = policy.retention_rule_for(classification)
         request.classified_by_user_id = getattr(actor, "user_id", None)
@@ -276,7 +281,7 @@ def configure_encryption(*, actor, request_id: int, key_ref: str,
     request = ArchivalRequest.objects.filter(pk=request_id).first()
     if request is None:
         raise LookupError("No such archival request.")
-    if request.status != "routed_to_security":
+    if request.status not in ("routed_to_security", "encryption_failed"):
         raise ConflictError(
             "Only a request routed to IT Security can be encrypted.",
             code="invalid_state")

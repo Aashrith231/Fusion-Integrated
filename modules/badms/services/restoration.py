@@ -17,7 +17,7 @@ from modules.badms.domain import states
 from modules.badms.models import ArchivalRequest, RestorationRequest
 from modules.badms.selectors import authz
 from modules.badms.services import audit as audit_service
-from modules.badms.services import notifications
+from modules.badms.services import locking, notifications
 
 log = logging.getLogger("fusion.badms.restoration")
 
@@ -93,6 +93,11 @@ def decide_request(*, actor, request_id: int, decision: str,
 
     uid = getattr(actor, "user_id", 0) or 0
     with transaction.atomic():
+        request = locking.locked(RestorationRequest.objects, request_id)
+        if request is None or request.status != "pending_approval":
+            raise ConflictError(
+                "Only a Sensitive restoration awaiting approval can be decided.",
+                code="invalid_state")
         request.status = states.restoration_transition(
             "pending_approval", "approve" if decision == "approve" else "reject")
         request.decided_by_user_id = uid
@@ -138,8 +143,16 @@ def execute_restoration(*, actor, request_id: int) -> RestorationRequest:
                             code="invalid_state")
 
     uid = getattr(actor, "user_id", 0) or 0
+    with transaction.atomic():
+        locked = locking.locked(RestorationRequest.objects, request_id)
+        if locked is None or locked.status not in (
+                "requested", "approved_for_restoration"):
+            raise ConflictError(
+                "This restoration request is not eligible for execution.",
+                code="invalid_state")
     failure = _perform_restore(request)
     with transaction.atomic():
+        request = locking.locked(RestorationRequest.objects, request_id)
         if failure is None:
             request.status = states.restoration_transition(
                 request.status, "execute")

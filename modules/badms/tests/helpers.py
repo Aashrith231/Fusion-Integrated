@@ -6,13 +6,13 @@ same projection the HoD scoping reads in production.
 """
 import datetime as dt
 
+from django.apps import apps
 from django.utils import timezone
 from rest_framework.test import APIClient
 
 from conftest import make_session
 from fusion_auth.principal import Principal
 from modules.badms.models import ArchivalRequest
-from modules.directory.models import UserRef
 
 USER_PERMS = (
     "badms.backup.view",
@@ -56,7 +56,8 @@ def api_client(stub_iam, *, uid, perms, kind="student") -> APIClient:
 
 def give_department(user_id: int, department: str) -> None:
     """A directory row, because department scope reads the projection."""
-    UserRef.objects.update_or_create(
+    user_ref = apps.get_model("directory", "UserRef")
+    user_ref.objects.update_or_create(
         user_id=user_id,
         defaults={"username": f"u{user_id}", "display_name": f"User {user_id}",
                   "kind": "staff", "department": department})

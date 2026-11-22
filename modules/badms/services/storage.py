@@ -22,7 +22,7 @@ from modules.badms.models import (
 )
 from modules.badms.selectors import authz
 from modules.badms.services import audit as audit_service
-from modules.badms.services import notifications
+from modules.badms.services import locking, notifications
 
 log = logging.getLogger("fusion.badms.storage")
 
@@ -162,6 +162,12 @@ def decide_extension(*, actor, request_id: int, decision: str,
     from modules.badms.domain import states
     uid = getattr(actor, "user_id", 0) or 0
     with transaction.atomic():
+        request = locking.locked(StorageExtensionRequest.objects, request_id)
+        if request is None:
+            raise LookupError("No such storage-extension request.")
+        if not authz.in_department(actor, request.department):
+            raise PermissionDeniedError(
+                "This request belongs to another department.")
         request.status = states.extension_transition(
             request.status, "approve" if decision == "approve" else "reject")
         request.decided_by_user_id = uid

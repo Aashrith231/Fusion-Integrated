@@ -32,6 +32,7 @@ def record_event(*, action: str, outcome: str = "success",
                 actor_label=actor_label or ("system" if actor is None else ""),
                 action=action, outcome=outcome, object_type=object_type,
                 object_id=str(object_id or ""), detail=detail[:300])
+    # audit recording must never break the action it records
     except Exception as exc:                                   # noqa: BLE001
         log.error("badms.audit.write_failed action=%s err=%s", action, exc)
         return False

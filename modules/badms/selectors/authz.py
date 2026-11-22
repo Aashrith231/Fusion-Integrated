@@ -25,7 +25,7 @@ def department_of(actor) -> str:
         return ""
     try:
         people = directory.get_users([uid])
-    except Exception:                                          # noqa: BLE001
+    except Exception:  # noqa: BLE001 — a broken projection must not break a permission check
         return ""
     ref = people.get(uid)
     return (ref.department or "").strip() if ref else ""
@@ -37,7 +37,7 @@ def departments_for(user_ids) -> dict[int, str]:
         return {}
     try:
         people = directory.get_users(sorted(ids))
-    except Exception:                                          # noqa: BLE001
+    except Exception:  # noqa: BLE001 — a broken projection must not break a permission check
         return dict.fromkeys(ids, "")
     return {i: (people[i].department or "").strip()
             for i in ids if i in people}

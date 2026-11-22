@@ -3,7 +3,7 @@ import pytest
 
 from modules.badms.models import BackupRepository
 
-from .helpers import ITSEC_PERMS, SYSADMIN_PERMS  # noqa: F401
+from .helpers import ITSEC_PERMS, SYSADMIN_PERMS  # noqa: F401 — re-exported for test files
 
 
 @pytest.fixture

@@ -14,6 +14,8 @@ ARCHIVAL_TRANSITIONS = {
     ("hod_approved", "classify_sensitive"): "routed_to_security",
     ("routed_to_security", "encrypt"): "encrypted",
     ("routed_to_security", "encrypt_failed"): "encryption_failed",
+    # E1: a failed encryption stays recoverable; IT Security can retry.
+    ("encryption_failed", "encrypt"): "encrypted",
 }
 
 

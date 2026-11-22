@@ -37,11 +37,6 @@ forbidden_modules =
 # into another module's internals.
 allow_indirect_imports = true
 # contracts.py is deliberately absent from the list above — it is the door.
-# BADMS's department scoping reads the directory projection, and its test
-# helpers seed that projection directly; there is no contract-level way to
-# create projection rows.
-ignore_imports =
-    modules.badms.tests.helpers -> modules.directory.models
 
 [importlinter:contract:domain-is-pure-python]
 name = domain/ must not import Django, DRF or Celery

@@ -241,6 +241,8 @@ REST_FRAMEWORK = {
         "export": "5/hour",
         "upload": "20/hour",
         "directory_search": "120/hour",
+        "badms_backup_trigger": "10/min",
+        "badms_write": "60/min",
     },
 }
 

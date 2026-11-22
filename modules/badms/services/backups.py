@@ -224,6 +224,7 @@ def _run(backup: Backup) -> Backup:
         backup.artifact_ref = str(path)
         backup.finished_at = timezone.now()
         backup.error = ""
+    # a dump can fail in any way; the row records the failure either way
     except Exception as exc:                                   # noqa: BLE001
         backup.status = "failed"
         backup.error = f"{exc.__class__.__name__}: {exc}"[:300]

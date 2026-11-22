@@ -352,3 +352,41 @@ class TestProtectedInformationEndpoints:
         denied = client.get(f"{URL}/reports/department",
                             {"department": OTHER_DEPT})
         assert denied.status_code == 403
+
+
+# -- CSRF: a cookie-borne write needs the X-CSRF-Token header ------------------
+class TestCsrfForCookieWrites:
+    """A cookie is ambient; the header proves the request was meant
+    (`core.api.csrf`, and the core test suite for the platform-wide rule)."""
+
+    def _cookie_client(self, stub_iam, uid=STUDENT, perms=USER_PERMS):
+        from django.conf import settings
+        from rest_framework.test import APIClient
+
+        from conftest import make_session
+
+        stub_iam(make_session(user_id=uid, kind="student", modules=("badms",),
+                              permissions=perms))
+        client = APIClient(enforce_csrf_checks=False)
+        client.credentials()          # no Authorization header: cookie only
+        client.cookies[settings.IAM_AUTH_COOKIE_NAME] = "tok-123"
+        return client
+
+    def test_a_cookie_write_without_the_header_is_refused(self, stub_iam):
+        client = self._cookie_client(stub_iam)
+        archived = make_archival(uid=STUDENT, classification="sensitive",
+                                 status="encrypted")
+        response = client.post(f"{URL}/restorations/request",
+                               {"archival": archived.pk}, format="json")
+        assert response.status_code == 403
+
+    def test_a_cookie_write_with_the_header_is_accepted(self, stub_iam):
+        from core.api import csrf
+
+        client = self._cookie_client(stub_iam)
+        archived = make_archival(uid=STUDENT, classification="sensitive",
+                                 status="encrypted")
+        response = client.post(
+            f"{URL}/restorations/request", {"archival": archived.pk},
+            format="json", HTTP_X_CSRF_TOKEN=csrf.token_for("tok-123"))
+        assert response.status_code == 201

@@ -104,6 +104,7 @@ class BackupListView(LookupAwareView):
 
 
 class ManualBackupView(LookupAwareView):
+    throttle_scope = "badms_backup_trigger"
     """POST /badms/backups/manual — trigger an on-demand backup
     (UC-BA-001, BR-BA-001)."""
 
@@ -158,6 +159,7 @@ class ScheduleListView(LookupAwareView):
 
 
 class ScheduleCreateView(LookupAwareView):
+    throttle_scope = "badms_write"
     """POST /badms/schedules — create a local dataset schedule
     (UC-BA-009 A1)."""
 
@@ -179,6 +181,7 @@ class ScheduleCreateView(LookupAwareView):
 
 
 class ScheduleModifyView(LookupAwareView):
+    throttle_scope = "badms_write"
     """PATCH /badms/schedules/<pk> — modify a local schedule (UC-BA-009 A2)."""
 
     permission_classes = [MODULE, HasPermission(P_SCHEDULE_MANAGE)]
@@ -203,6 +206,7 @@ class ScheduleModifyView(LookupAwareView):
 
 @extend_schema(responses=s.ScheduleSerializer)
 class GlobalScheduleView(LookupAwareView):
+    throttle_scope = "badms_write"
     """GET/PUT /badms/schedules/global — the institution-wide schedule and
     default policy (UC-BA-011, BR-BA-019)."""
 
@@ -273,6 +277,7 @@ class ArchivalMineView(LookupAwareView):
 
 
 class ArchivalSubmitView(LookupAwareView):
+    throttle_scope = "badms_write"
     """POST /badms/archival — submit a secure archival request (UC-BA-002)."""
 
     permission_classes = [MODULE, HasPermission(P_ARCHIVAL_SUBMIT)]
@@ -313,6 +318,7 @@ class ArchivalDetailView(LookupAwareView):
 
 
 class ArchivalDecideView(LookupAwareView):
+    throttle_scope = "badms_write"
     """POST /badms/archival/<pk>/decide — the respective HoD approves or
     rejects (UC-BA-003)."""
 
@@ -333,6 +339,7 @@ class ArchivalDecideView(LookupAwareView):
 
 
 class ArchivalClassifyView(LookupAwareView):
+    throttle_scope = "badms_write"
     """POST /badms/archival/<pk>/classify — authoritative classification
     (UC-BA-004)."""
 
@@ -353,6 +360,7 @@ class ArchivalClassifyView(LookupAwareView):
 
 
 class ArchivalEncryptionView(LookupAwareView):
+    throttle_scope = "badms_write"
     """POST /badms/archival/<pk>/encryption — configure encryption and create
     the encrypted archive (UC-BA-005)."""
 
@@ -385,6 +393,7 @@ class SpecialArchivalListView(LookupAwareView):
 
 
 class SpecialArchivalView(LookupAwareView):
+    throttle_scope = "badms_write"
     """POST /badms/special-archival — perform a special archival operation
     (UC-BA-010)."""
 
@@ -417,6 +426,7 @@ class RestorationListView(LookupAwareView):
 
 
 class RestorationRequestView(LookupAwareView):
+    throttle_scope = "badms_write"
     """POST /badms/restorations — request restoration (UC-BA-016)."""
 
     permission_classes = [MODULE, HasPermission(P_REST_REQUEST)]
@@ -435,6 +445,7 @@ class RestorationRequestView(LookupAwareView):
 
 
 class RestorationDecideView(LookupAwareView):
+    throttle_scope = "badms_write"
     """POST /badms/restorations/<pk>/decide — SysAdmin approval for Sensitive
     data (UC-BA-017, BR-BA-005)."""
 
@@ -453,6 +464,7 @@ class RestorationDecideView(LookupAwareView):
 
 
 class RestorationExecuteView(LookupAwareView):
+    throttle_scope = "badms_write"
     """POST /badms/restorations/<pk>/execute — technical execution
     (UC-BA-018)."""
 
@@ -480,6 +492,7 @@ class MyStorageView(LookupAwareView):
 
 
 class StorageExtensionSubmitView(LookupAwareView):
+    throttle_scope = "badms_write"
     """POST /badms/storage/extensions — submit an extension request
     (UC-BA-007)."""
 
@@ -524,6 +537,7 @@ class StorageExtensionQueueView(LookupAwareView):
 
 
 class StorageExtensionDecideView(LookupAwareView):
+    throttle_scope = "badms_write"
     """POST /badms/storage/extensions/<pk>/decide — the respective HoD
     approves or rejects (UC-BA-008)."""
 
@@ -585,6 +599,7 @@ class SecurityAuditView(LookupAwareView):
 
 
 class SecurityPolicyListView(LookupAwareView):
+    throttle_scope = "badms_write"
     """GET/POST /badms/security/policies — define security policies
     (UC-BA-020)."""
 
@@ -609,6 +624,7 @@ class SecurityPolicyListView(LookupAwareView):
 
 
 class SecurityPolicyDetailView(LookupAwareView):
+    throttle_scope = "badms_write"
     """PATCH /badms/security/policies/<pk> — update or retire a policy."""
 
     permission_classes = [MODULE, HasPermission(P_POLICY_MANAGE)]
@@ -627,6 +643,7 @@ class SecurityPolicyDetailView(LookupAwareView):
 
 
 class RbacView(LookupAwareView):
+    throttle_scope = "badms_write"
     """GET/POST /badms/security/rbac — manage BADMS RBAC assignments
     (UC-BA-019)."""
 

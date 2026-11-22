@@ -104,6 +104,7 @@ def _resolve_addresses(rows: list[NotificationOutbox]) -> dict[int, str]:
            if r.recipient_user_id and not r.recipient_email}
     if not ids:
         return {}
+    # a broken projection must not stop the delivery run
     try:
         people = directory.get_users(sorted(ids))
     except Exception as exc:                                   # noqa: BLE001
@@ -147,6 +148,7 @@ def deliver_pending(*, limit: int | None = None, now=None) -> DeliveryReport:
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[to], fail_silently=False,
             )
+        # one bad SMTP server must not abort the delivery run
         except Exception as exc:                               # noqa: BLE001
             _fail(row, f"{exc.__class__.__name__}: {exc}"[:300], max_attempts)
             report.failed += 1
