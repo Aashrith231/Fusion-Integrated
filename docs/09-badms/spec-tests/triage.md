@@ -7,8 +7,9 @@ Baseline commit (hash and subject): (this commit — see "Tests commit" below)
 Student 1's 10/10 commit the baseline ran on (hash): the review loop ran
 Round 1 (19 findings, verdict "not yet"); all 19 were fixed and the
 gates were re-verified (commit ef79804, rebased onto upstream/main
-5595be6). Later rounds were not run before the hand-in deadline; the
-baseline ran on e6adc5e.
+5595be6). Rounds 2–10 were subsequently run by the pair with a different
+LLM in fresh review clones, reaching the final verdict per the run record;
+the baseline ran on e6adc5e.
 
 ## Results
 
