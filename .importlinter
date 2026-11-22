@@ -13,6 +13,7 @@ name = Modules may reach each other ONLY through contracts.py
 type = forbidden
 source_modules =
     modules.placement
+    modules.badms
     modules.directory
     modules.accesscontrol
 forbidden_modules =
@@ -21,6 +22,11 @@ forbidden_modules =
     modules.placement.selectors
     modules.placement.api
     modules.placement.domain
+    modules.badms.models
+    modules.badms.services
+    modules.badms.selectors
+    modules.badms.api
+    modules.badms.domain
     modules.directory.models
     modules.directory.services
     modules.directory.api
@@ -36,15 +42,17 @@ allow_indirect_imports = true
 name = domain/ must not import Django, DRF or Celery
 type = forbidden
 source_modules =
+# Every module's domain, not just the first one written.
     modules.placement.domain
+    modules.badms.domain
 forbidden_modules =
     django
     rest_framework
     celery
 
 # NOTE on `devtools`: it is intentionally NOT listed as a module anywhere in
-# this file. Seeding fixtures is cross-cutting by nature — it touches placement,
-# hr, leave and directory at once — so it is a tool, not a bounded context. It
+# this file. Seeding fixtures is cross-cutting by nature — it touches placement
+# and directory at once — so it is a tool, not a bounded context. It
 # is installed in dev/test settings only. Declaring the exemption here keeps it
 # visible instead of it quietly becoming a back door.
 
@@ -65,3 +73,13 @@ layers =
     modules.placement.selectors
     modules.placement.models
     modules.placement.domain
+
+[importlinter:contract:badms-layers]
+name = Layering inside badms
+type = layers
+layers =
+    modules.badms.api
+    modules.badms.services
+    modules.badms.selectors
+    modules.badms.models
+    modules.badms.domain

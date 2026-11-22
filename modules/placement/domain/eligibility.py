@@ -17,12 +17,23 @@ FIELDS = {
     "cpi", "earned_credits", "active_backlogs", "semester",   # IAM projection
     "programme", "discipline", "batch_year",                  # IAM directory
     "is_placed", "is_registered", "offer_count",              # this module
-    "skills", "profile_complete",                             # own profile
+    "profile_complete",                                       # the ERP portal
 }
 
-# List-valued facts, comparable only with the set operators.
-LIST_FIELDS = {"skills"}
+# List-valued facts, comparable only with the set operators. None today.
+LIST_FIELDS: set[str] = set()
 LIST_OPS = {"has_all", "has_any", "has_none"}
+
+# Each scalar field's literal type, so a rule is checked when it is written.
+NUMERIC_FIELDS = {"cpi", "earned_credits", "active_backlogs", "semester",
+                  "batch_year", "offer_count"}
+TEXT_FIELDS = {"programme", "discipline"}
+FLAG_FIELDS = {"is_placed", "is_registered", "profile_complete"}
+
+EQUALITY_OPS = {"eq", "ne"}
+MEMBERSHIP_OPS = {"in", "not_in"}
+ORDER_OPS = {"gt", "gte", "lt", "lte"}
+OPERATORS = EQUALITY_OPS | MEMBERSHIP_OPS | ORDER_OPS | LIST_OPS
 
 MAX_DEPTH = 5
 
@@ -77,6 +88,14 @@ def _compare_list(op: str, field: str, expected, actual) -> RuleOutcome:
                        "" if not overlap else f"{field}_disallowed:{','.join(overlap)}")
 
 
+def _same(field: str, actual, expected) -> bool | None:
+    """Equality by value for numbers: a CPI stored as Decimal("8.10") equals 8.1."""
+    if field not in NUMERIC_FIELDS:
+        return actual == expected
+    a, e = _num(actual), _num(expected)
+    return None if a is None or e is None else a == e
+
+
 def _compare(op: str, field: str, expected, actual) -> RuleOutcome:
     # A rule-authoring mistake still denies: guessing is how someone slips through.
     if (field in LIST_FIELDS) != (op in LIST_OPS):
@@ -88,13 +107,17 @@ def _compare(op: str, field: str, expected, actual) -> RuleOutcome:
         return RuleOutcome(field, op, expected, None, False, "missing_fact")
 
     if op in ("eq", "ne"):
-        ok = (actual == expected) if op == "eq" else (actual != expected)
+        same = _same(field, actual, expected)
+        if same is None:
+            return RuleOutcome(field, op, expected, actual, False, "type_mismatch")
+        ok = same if op == "eq" else not same
         return RuleOutcome(field, op, expected, actual, ok,
                            "" if ok else f"{field}_mismatch")
     if op in ("in", "not_in"):
         if not isinstance(expected, (list, tuple)):
             return RuleOutcome(field, op, expected, actual, False, "bad_rule")
-        ok = (actual in expected) if op == "in" else (actual not in expected)
+        found = any(_same(field, actual, e) for e in expected)
+        ok = found if op == "in" else not found
         return RuleOutcome(field, op, expected, actual, ok,
                            "" if ok else f"{field}_not_allowed")
 
@@ -159,7 +182,7 @@ LABELS = {
     "programme": "programme", "discipline": "discipline",
     "batch_year": "batch year", "is_placed": "placement status",
     "is_registered": "season registration", "offer_count": "offers held",
-    "skills": "skills", "profile_complete": "profile completeness",
+    "profile_complete": "profile completeness",
 }
 
 _OP_PHRASE = {
@@ -177,11 +200,6 @@ def describe(outcome: RuleOutcome) -> str:
             return ("No declared result yet, so your academic standing cannot be "
                     "checked. Eligibility opens once your result is declared.")
         return f"{label} is not recorded on your profile yet."
-    if outcome.reason.startswith("skills_missing:"):
-        missing = outcome.reason.split(":", 1)[1].replace(",", ", ")
-        return f"Missing required skills: {missing}."
-    if outcome.reason == "skills_none_of_required":
-        return f"None of the required skills are listed: {outcome.required}."
     if outcome.op in ("in", "not_in"):
         allowed = ", ".join(str(x) for x in (outcome.required or []))
         return f"{label} is {outcome.actual} — this posting is open to {allowed}."
@@ -205,3 +223,74 @@ def failure_reasons(outcome: Outcome) -> list[dict]:
          "actual": o.actual, "message": describe(o)}
         for o in outcome.outcomes if not o.passed
     ]
+
+
+# -- Authoring --------------------------------------------------------------------
+@dataclass(frozen=True)
+class Problem:
+    path: str
+    field: str
+    reason: str
+
+
+def validate(rule) -> list[Problem]:
+    """Every reason a rule could not be evaluated as written; empty when it is sound."""
+    if not rule:
+        return []
+    problems: list[Problem] = []
+    _check(rule, "rule", 0, problems)
+    return problems
+
+
+def _check(node, path: str, depth: int, out: list[Problem]) -> None:
+    if depth > MAX_DEPTH:
+        out.append(Problem(path, "", "rule_too_complex"))
+        return
+    if not isinstance(node, dict) or len(node) != 1:
+        out.append(Problem(path, "", "malformed_rule"))
+        return
+    (op, operand), = node.items()
+    if op in ("all", "any"):
+        if not isinstance(operand, list) or not operand:
+            out.append(Problem(path, "", "malformed_rule"))
+            return
+        for i, sub in enumerate(operand):
+            _check(sub, f"{path}.{op}[{i}]", depth + 1, out)
+        return
+    if op == "not":
+        _check(operand, f"{path}.not", depth + 1, out)
+        return
+    if (not isinstance(operand, (list, tuple)) or len(operand) != 2
+            or not isinstance(operand[0], str)):
+        out.append(Problem(path, "", "malformed_rule"))
+        return
+    field, expected = operand
+    reason = _comparison_problem(op, field, expected)
+    if reason:
+        out.append(Problem(path, field, reason))
+
+
+def _comparison_problem(op: str, field: str, expected) -> str:
+    if op not in OPERATORS:
+        return "unknown_operator"
+    if field not in FIELDS:
+        return "unknown_field"
+    if (field in LIST_FIELDS) != (op in LIST_OPS):
+        return "operator_not_valid_for_field"
+    if op in LIST_OPS:
+        return "" if _norm_set(expected) else "type_mismatch"
+    if op in ORDER_OPS and field not in NUMERIC_FIELDS:
+        return "operator_not_valid_for_field"
+    if op in MEMBERSHIP_OPS:
+        if not isinstance(expected, list) or not expected:
+            return "type_mismatch"
+        return "" if all(_literal_fits(field, v) for v in expected) else "type_mismatch"
+    return "" if _literal_fits(field, expected) else "type_mismatch"
+
+
+def _literal_fits(field: str, value) -> bool:
+    if field in NUMERIC_FIELDS:
+        return isinstance(value, (int, float, Decimal)) and not isinstance(value, bool)
+    if field in FLAG_FIELDS:
+        return isinstance(value, bool)
+    return isinstance(value, str) and bool(value.strip())

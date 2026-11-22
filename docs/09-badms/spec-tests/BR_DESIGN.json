@@ -1,0 +1,326 @@
+[
+ {
+  "test_id": "BR-001",
+  "source_id": "BR-BA-001 permitted-actor",
+  "purpose": "SysAdmin/SuperAdmin may trigger a manual backup",
+  "preconditions": "Sessions for sysadmin and super admin",
+  "action_or_input": "Both trigger a manual backup",
+  "expected_result": "Both succeed",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-002",
+  "source_id": "BR-BA-001 condition-false",
+  "purpose": "Others are refused the manual trigger",
+  "preconditions": "A student session",
+  "action_or_input": "Trigger a manual backup",
+  "expected_result": "Refused; no backup row",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "BR-003",
+  "source_id": "BR-BA-002 condition-true",
+  "purpose": "The respective HoD may decide",
+  "preconditions": "A submitted request; the HoD of the requester's department",
+  "action_or_input": "Decide",
+  "expected_result": "Succeeds",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-004",
+  "source_id": "BR-BA-002 condition-false",
+  "purpose": "A HoD of another department may not decide",
+  "preconditions": "A request in D; the HoD of E",
+  "action_or_input": "Attempt the decision",
+  "expected_result": "Refused; state unchanged",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "BR-005",
+  "source_id": "BR-BA-003 permitted-actor",
+  "purpose": "Only IT Security configures encryption",
+  "preconditions": "A routed_to_security request; IT Security",
+  "action_or_input": "Configure encryption",
+  "expected_result": "Succeeds",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-006",
+  "source_id": "BR-BA-003 condition-false",
+  "purpose": "A SysAdmin may not configure encryption",
+  "preconditions": "A routed_to_security request; SysAdmin",
+  "action_or_input": "Attempt to configure encryption",
+  "expected_result": "Refused",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "BR-007",
+  "source_id": "BR-BA-004 permitted-actor",
+  "purpose": "Only the SysAdmin classifies",
+  "preconditions": "A hod_approved request; SysAdmin",
+  "action_or_input": "Classify",
+  "expected_result": "Succeeds",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-008",
+  "source_id": "BR-BA-004 condition-false",
+  "purpose": "IT Security may not classify",
+  "preconditions": "A hod_approved request; IT Security",
+  "action_or_input": "Attempt classification",
+  "expected_result": "Refused",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "BR-009",
+  "source_id": "BR-BA-005 condition-true",
+  "purpose": "Sensitive restoration proceeds only after approval",
+  "preconditions": "A pending_approval Sensitive restoration",
+  "action_or_input": "Approve, then execute",
+  "expected_result": "Approval then execution succeed",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-010",
+  "source_id": "BR-BA-005 condition-false",
+  "purpose": "Executing an unapproved Sensitive restoration is refused",
+  "preconditions": "A pending_approval Sensitive restoration",
+  "action_or_input": "Execute without approval",
+  "expected_result": "Refused; state unchanged",
+  "test_type": "negative"
+ },
+ {
+  "test_id": "BR-011",
+  "source_id": "BR-BA-006 default",
+  "purpose": "Missing initial classification defaults to Routine",
+  "preconditions": "A submission omitting the classification",
+  "action_or_input": "Submit",
+  "expected_result": "Initial classification stored as Routine",
+  "test_type": "boundary"
+ },
+ {
+  "test_id": "BR-012",
+  "source_id": "BR-BA-006 explicit",
+  "purpose": "A supplied initial classification is honored",
+  "preconditions": "A submission with initial classification Sensitive",
+  "action_or_input": "Submit",
+  "expected_result": "Initial classification stored as Sensitive",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-013",
+  "source_id": "BR-BA-007 enforcement",
+  "purpose": "Sensitive data is encrypted AES-256 at rest and in transit",
+  "preconditions": "A Sensitive request",
+  "action_or_input": "Complete the encryption step",
+  "expected_result": "The recorded algorithm is AES-256 (at rest and in transit)",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-014",
+  "source_id": "BR-BA-008 enforcement",
+  "purpose": "Retention follows the classification",
+  "preconditions": "A request classified Archival",
+  "action_or_input": "Classify",
+  "expected_result": "The archival retention rule is stored",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-015",
+  "source_id": "BR-BA-009 permitted-actor",
+  "purpose": "The HoD approves the extension",
+  "preconditions": "A queued extension; the respective HoD",
+  "action_or_input": "Approve",
+  "expected_result": "Succeeds",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-016",
+  "source_id": "BR-BA-009 condition-false",
+  "purpose": "A non-respective HoD is refused",
+  "preconditions": "A queued extension in D; the HoD of E",
+  "action_or_input": "Attempt the decision",
+  "expected_result": "Refused",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "BR-017",
+  "source_id": "BR-BA-010 enforcement",
+  "purpose": "HoD acts only within their department",
+  "preconditions": "The HoD of D; requests from D and E",
+  "action_or_input": "List queues and attempt decisions across both",
+  "expected_result": "Only D's rows are visible/decidable",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "BR-018",
+  "source_id": "BR-BA-011 override",
+  "purpose": "A local schedule overrides the global schedule",
+  "preconditions": "Global schedule + local schedule for D",
+  "action_or_input": "Evaluate the effective schedule for D",
+  "expected_result": "The local schedule wins",
+  "test_type": "boundary"
+ },
+ {
+  "test_id": "BR-019",
+  "source_id": "BR-BA-011 no-override",
+  "purpose": "The global schedule applies without a local override",
+  "preconditions": "Global schedule only",
+  "action_or_input": "Evaluate the effective schedule",
+  "expected_result": "The global schedule applies",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-020",
+  "source_id": "BR-BA-012 invalid-params",
+  "purpose": "Invalid schedule parameters are rejected unapplied",
+  "preconditions": "A submission with an unknown frequency",
+  "action_or_input": "Submit",
+  "expected_result": "Refused; nothing stored",
+  "test_type": "negative"
+ },
+ {
+  "test_id": "BR-021",
+  "source_id": "BR-BA-012 conflict",
+  "purpose": "A conflicting schedule is rejected unapplied",
+  "preconditions": "An active schedule; a second overlapping one",
+  "action_or_input": "Submit the second",
+  "expected_result": "Refused; nothing stored",
+  "test_type": "negative"
+ },
+ {
+  "test_id": "BR-022",
+  "source_id": "BR-BA-013 reachable",
+  "purpose": "A scheduled run needs a reachable repository",
+  "preconditions": "A due schedule; reachable repository",
+  "action_or_input": "Run",
+  "expected_result": "Executes",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-023",
+  "source_id": "BR-BA-013 unreachable",
+  "purpose": "An unreachable repository blocks the scheduled run",
+  "preconditions": "A due schedule; unreachable repository",
+  "action_or_input": "Run",
+  "expected_result": "No transfer; failure recorded",
+  "test_type": "negative"
+ },
+ {
+  "test_id": "BR-024",
+  "source_id": "BR-BA-014 within-SLA",
+  "purpose": "A failed backup alerts the SysAdmin within five minutes",
+  "preconditions": "A failed backup",
+  "action_or_input": "Deliver notifications",
+  "expected_result": "The SysAdmin alert is queued inside the SLA window",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-025",
+  "source_id": "BR-BA-014 guard",
+  "purpose": "A missed alert is re-queued by the sweep",
+  "preconditions": "A failed backup whose alert was never delivered",
+  "action_or_input": "Run the alert sweep",
+  "expected_result": "The alert returns to the delivery queue",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-026",
+  "source_id": "BR-BA-015 at-3",
+  "purpose": "The third consecutive failure escalates to the Director of IT",
+  "preconditions": "Two recorded consecutive failures",
+  "action_or_input": "Record a third",
+  "expected_result": "One escalation notification queued",
+  "test_type": "boundary"
+ },
+ {
+  "test_id": "BR-027",
+  "source_id": "BR-BA-015 not-at-3",
+  "purpose": "Fewer than three consecutive failures do not escalate",
+  "preconditions": "Two consecutive failures",
+  "action_or_input": "Inspect notifications",
+  "expected_result": "No escalation notification exists",
+  "test_type": "negative"
+ },
+ {
+  "test_id": "BR-028",
+  "source_id": "BR-BA-016 full",
+  "purpose": "An extension is valid only at a full quota",
+  "preconditions": "A user at 100% quota",
+  "action_or_input": "Submit",
+  "expected_result": "Accepted",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-029",
+  "source_id": "BR-BA-016 not-full",
+  "purpose": "A non-full quota refuses the extension",
+  "preconditions": "A user below full",
+  "action_or_input": "Submit",
+  "expected_result": "Refused; nothing created",
+  "test_type": "negative"
+ },
+ {
+  "test_id": "BR-030",
+  "source_id": "BR-BA-017 criteria",
+  "purpose": "The decision is informed by the recorded criteria",
+  "preconditions": "A queued extension with usage, justification, attachment and infrastructure picture",
+  "action_or_input": "The HoD fetches the queue detail",
+  "expected_result": "All stated criteria are visible to the deciding HoD",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-031",
+  "source_id": "BR-BA-018 permitted-actor",
+  "purpose": "Only the Super Admin performs special archival",
+  "preconditions": "Super Admin session",
+  "action_or_input": "Perform",
+  "expected_result": "Succeeds",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-032",
+  "source_id": "BR-BA-018 condition-false",
+  "purpose": "Any other role is refused special archival",
+  "preconditions": "A sysadmin session",
+  "action_or_input": "Attempt the operation",
+  "expected_result": "Refused",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "BR-033",
+  "source_id": "BR-BA-019 permitted-actor",
+  "purpose": "Only the Super Admin defines global schedules",
+  "preconditions": "Super Admin session",
+  "action_or_input": "Define the global schedule",
+  "expected_result": "Succeeds",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "BR-034",
+  "source_id": "BR-BA-019 condition-false",
+  "purpose": "A SysAdmin is refused the global definition",
+  "preconditions": "SysAdmin session",
+  "action_or_input": "Attempt the definition",
+  "expected_result": "Refused",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "BR-035",
+  "source_id": "BR-BA-020 enforcement",
+  "purpose": "Protected information is shown only within scope",
+  "preconditions": "Rows owned by two users; a plain user session",
+  "action_or_input": "Request another user's row by id and via filters",
+  "expected_result": "Out-of-scope rows are absent (not an authorization error confirming existence)",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "BR-036",
+  "source_id": "BR-BA-021 authority",
+  "purpose": "Only IT Security manages RBAC/security policy",
+  "preconditions": "IT Security session; a SysAdmin session",
+  "action_or_input": "Both attempt an RBAC grant",
+  "expected_result": "IT Security's succeeds; the SysAdmin's is refused",
+  "test_type": "authorization"
+ }
+]

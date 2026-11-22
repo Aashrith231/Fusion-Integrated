@@ -1,0 +1,128 @@
+[
+ {
+  "test_id": "WF-001",
+  "source_id": "BW-BA-01 rejection path",
+  "purpose": "Secure archival rejected by the HoD",
+  "preconditions": "A submitted request; its HoD",
+  "action_or_input": "Reject",
+  "expected_result": "submitted \u2192 rejected; decision recorded; requester notified",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "WF-002",
+  "source_id": "BW-BA-02 non-sensitive path",
+  "purpose": "Secure archival approved and classified non-Sensitive",
+  "preconditions": "A submitted request; HoD and SysAdmin",
+  "action_or_input": "Approve, then classify Routine",
+  "expected_result": "submitted \u2192 hod_approved \u2192 classified with retention applied",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "WF-003",
+  "source_id": "BW-BA-03 sensitive path",
+  "purpose": "Secure archival approved and encrypted",
+  "preconditions": "A submitted request; HoD, SysAdmin, IT Security",
+  "action_or_input": "Approve, classify Sensitive, configure encryption",
+  "expected_result": "submitted \u2192 hod_approved \u2192 routed_to_security \u2192 encrypted",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "WF-004",
+  "source_id": "CW-BA-01 legal and illegal transitions",
+  "purpose": "The archival machine accepts every legal transition and rejects an illegal one",
+  "preconditions": "Requests at each state",
+  "action_or_input": "Drive each legal pair; attempt an illegal pair (reject after approval)",
+  "expected_result": "Legal pairs transition; the illegal pair is refused with a conflict",
+  "test_type": "boundary"
+ },
+ {
+  "test_id": "WF-005",
+  "source_id": "BW-BA-04 rejected path",
+  "purpose": "Extension request rejected by the HoD",
+  "preconditions": "A full-quota user's queued request; its HoD",
+  "action_or_input": "Reject",
+  "expected_result": "submitted \u2192 rejected; decision recorded",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "WF-006",
+  "source_id": "BW-BA-05 approved path",
+  "purpose": "Extension request approved by the HoD",
+  "preconditions": "A full-quota user's queued request; its HoD",
+  "action_or_input": "Approve",
+  "expected_result": "submitted \u2192 approved; decision recorded; requester notified",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "WF-007",
+  "source_id": "CW-BA-02 legal and illegal transitions",
+  "purpose": "The extension machine accepts legal and rejects illegal transitions",
+  "preconditions": "Requests at each state",
+  "action_or_input": "Drive each legal pair; attempt re-deciding a decided request",
+  "expected_result": "Legal pairs transition; re-decision conflicts",
+  "test_type": "boundary"
+ },
+ {
+  "test_id": "WF-008",
+  "source_id": "BW-BA-06 standard path",
+  "purpose": "Non-Sensitive restoration takes the standard path",
+  "preconditions": "Archived non-Sensitive data; its owner; SysAdmin",
+  "action_or_input": "Request then execute",
+  "expected_result": "requested \u2192 restored with no approval step",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "WF-009",
+  "source_id": "BW-BA-07 approval path",
+  "purpose": "Sensitive restoration takes the SysAdmin-approval path",
+  "preconditions": "Archived Sensitive data; owner; SysAdmin",
+  "action_or_input": "Request, approve, execute",
+  "expected_result": "pending_approval \u2192 approved_for_restoration \u2192 restored",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "WF-010",
+  "source_id": "CW-BA-03 legal and illegal transitions",
+  "purpose": "The restoration machine accepts legal and rejects illegal transitions",
+  "preconditions": "Requests at each state",
+  "action_or_input": "Drive each legal pair; attempt execution before Sensitive approval",
+  "expected_result": "Legal pairs transition; premature execution conflicts",
+  "test_type": "boundary"
+ },
+ {
+  "test_id": "WF-011",
+  "source_id": "BW-BA-04 usage-validation gate",
+  "purpose": "The extension flow starts only from a full quota",
+  "preconditions": "A user below full quota",
+  "action_or_input": "Attempt submission",
+  "expected_result": "Refused before any queue entry exists",
+  "test_type": "negative"
+ },
+ {
+  "test_id": "WF-012",
+  "source_id": "BW-BA-03 encryption-failure recovery path",
+  "purpose": "A failed encryption stays recoverable and a retry succeeds",
+  "preconditions": "A routed_to_security request; an unwritable archive root, then a writable one",
+  "action_or_input": "Fail the encryption, then retry",
+  "expected_result": "First attempt \u2192 encryption_failed; the retry succeeds \u2192 encrypted",
+  "test_type": "boundary"
+ },
+ {
+  "test_id": "WF-013",
+  "source_id": "BW-BA-02 classification-defaults path",
+  "purpose": "A submission without an initial classification still flows to classification",
+  "preconditions": "A submission omitting the initial classification; HoD and SysAdmin",
+  "action_or_input": "Submit, approve, classify Routine",
+  "expected_result": "The default Routine classification carries the request through the path",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "WF-014",
+  "source_id": "BW-BA-06 restoration-failure path",
+  "purpose": "A restoration whose artifact is missing records a failure",
+  "preconditions": "An eligible restoration whose referenced artifact is missing",
+  "action_or_input": "Execute",
+  "expected_result": "\u2192 failed with the reason recorded; the history is preserved",
+  "test_type": "negative"
+ }
+]

@@ -1,5 +1,270 @@
 {
   "modules": {
+    "badms": {
+      "grants": {
+        "faculty": [
+          "badms.archival.submit",
+          "badms.backup.view",
+          "badms.restoration.request",
+          "badms.storage.request"
+        ],
+        "hod": [
+          "badms.archival.decide",
+          "badms.archival.submit",
+          "badms.backup.view",
+          "badms.report.department",
+          "badms.restoration.request",
+          "badms.storage.decide",
+          "badms.storage.request"
+        ],
+        "it_security": [
+          "badms.backup.view",
+          "badms.encryption.manage",
+          "badms.rbac.manage",
+          "badms.security.audit",
+          "badms.security_policy.manage"
+        ],
+        "staff": [
+          "badms.archival.submit",
+          "badms.backup.view",
+          "badms.restoration.request",
+          "badms.storage.request"
+        ],
+        "student": [
+          "badms.archival.submit",
+          "badms.backup.view",
+          "badms.restoration.request",
+          "badms.storage.request"
+        ],
+        "super_admin": [
+          "badms.archival.classify",
+          "badms.audit.view",
+          "badms.backup.trigger",
+          "badms.backup.view",
+          "badms.restoration.approve",
+          "badms.restoration.execute",
+          "badms.schedule.manage",
+          "badms.schedule.manage_global",
+          "badms.special_archival.perform"
+        ],
+        "sysadmin": [
+          "badms.archival.classify",
+          "badms.audit.view",
+          "badms.backup.trigger",
+          "badms.backup.view",
+          "badms.restoration.approve",
+          "badms.restoration.execute",
+          "badms.schedule.manage"
+        ]
+      },
+      "module_grants": [
+        "faculty",
+        "hod",
+        "it_security",
+        "staff",
+        "student",
+        "super_admin",
+        "sysadmin"
+      ],
+      "nav": {
+        "base_path": "/badms",
+        "icon": "FaDatabase",
+        "items": [
+          {
+            "code": "badms.backups",
+            "icon": "FaDatabase",
+            "label": "Backup Status",
+            "required_permission": "badms.backup.view",
+            "sort_order": 5,
+            "to": "/badms/backups"
+          },
+          {
+            "code": "badms.schedules",
+            "icon": "FaCalendarAlt",
+            "label": "Backup Schedules",
+            "required_permission": "badms.schedule.manage",
+            "sort_order": 10,
+            "to": "/badms/schedules"
+          },
+          {
+            "code": "badms.archival",
+            "icon": "FaBoxOpen",
+            "label": "Secure Archival",
+            "required_permission": "badms.archival.submit",
+            "sort_order": 15,
+            "to": "/badms/archival"
+          },
+          {
+            "code": "badms.archival_review",
+            "icon": "FaInbox",
+            "label": "Archival Review",
+            "required_permission": "badms.archival.decide",
+            "sort_order": 20,
+            "to": "/badms/archival-review"
+          },
+          {
+            "code": "badms.classification",
+            "icon": "FaTags",
+            "label": "Classification",
+            "required_permission": "badms.archival.classify",
+            "sort_order": 25,
+            "to": "/badms/classification"
+          },
+          {
+            "code": "badms.encryption",
+            "icon": "FaLock",
+            "label": "Encryption",
+            "required_permission": "badms.encryption.manage",
+            "sort_order": 30,
+            "to": "/badms/encryption"
+          },
+          {
+            "code": "badms.special_archival",
+            "icon": "FaArchive",
+            "label": "Special Archival",
+            "required_permission": "badms.special_archival.perform",
+            "sort_order": 35,
+            "to": "/badms/special-archival"
+          },
+          {
+            "code": "badms.restoration",
+            "icon": "FaUndo",
+            "label": "Restoration",
+            "required_permission": "badms.restoration.request",
+            "sort_order": 40,
+            "to": "/badms/restoration"
+          },
+          {
+            "code": "badms.storage",
+            "icon": "FaHdd",
+            "label": "My Storage",
+            "required_permission": "badms.storage.request",
+            "sort_order": 45,
+            "to": "/badms/storage"
+          },
+          {
+            "code": "badms.storage_approvals",
+            "icon": "FaClipboardCheck",
+            "label": "Storage Approvals",
+            "required_permission": "badms.storage.decide",
+            "sort_order": 50,
+            "to": "/badms/storage-approvals"
+          },
+          {
+            "code": "badms.audit",
+            "icon": "FaHistory",
+            "label": "Audit Logs",
+            "required_permission": "badms.audit.view",
+            "sort_order": 55,
+            "to": "/badms/audit"
+          },
+          {
+            "code": "badms.security",
+            "icon": "FaShieldAlt",
+            "label": "Security",
+            "required_permission": "badms.security.audit",
+            "sort_order": 60,
+            "to": "/badms/security"
+          },
+          {
+            "code": "badms.reports",
+            "icon": "FaChartBar",
+            "label": "Department Reports",
+            "required_permission": "badms.report.department",
+            "sort_order": 65,
+            "to": "/badms/reports"
+          }
+        ],
+        "label": "Backup & Archive",
+        "nav_section": "Data Management",
+        "sort_order": 20,
+        "status": "active"
+      },
+      "permissions": [
+        {
+          "code": "badms.backup.view",
+          "label": "View backup status and history"
+        },
+        {
+          "code": "badms.backup.trigger",
+          "label": "Trigger a manual backup"
+        },
+        {
+          "code": "badms.schedule.manage",
+          "label": "Create and modify local backup schedules"
+        },
+        {
+          "code": "badms.schedule.manage_global",
+          "label": "Define institution-wide global backup schedules and defaults"
+        },
+        {
+          "code": "badms.archival.submit",
+          "label": "Submit secure archival requests"
+        },
+        {
+          "code": "badms.archival.decide",
+          "label": "Approve or reject archival requests for one's own department"
+        },
+        {
+          "code": "badms.archival.classify",
+          "label": "Assign the authoritative archival classification"
+        },
+        {
+          "code": "badms.encryption.manage",
+          "label": "Configure encryption for Sensitive data"
+        },
+        {
+          "code": "badms.special_archival.perform",
+          "label": "Perform special archival operations"
+        },
+        {
+          "code": "badms.restoration.request",
+          "label": "Request restoration of archived data"
+        },
+        {
+          "code": "badms.restoration.approve",
+          "label": "Approve Sensitive data restoration"
+        },
+        {
+          "code": "badms.restoration.execute",
+          "label": "Execute technical restoration"
+        },
+        {
+          "code": "badms.storage.request",
+          "label": "Submit storage-extension requests"
+        },
+        {
+          "code": "badms.storage.decide",
+          "label": "Decide storage-extension requests for one's own department"
+        },
+        {
+          "code": "badms.audit.view",
+          "label": "View audit logs and activity history"
+        },
+        {
+          "code": "badms.security.audit",
+          "label": "Audit data activity and review security reports"
+        },
+        {
+          "code": "badms.rbac.manage",
+          "label": "Manage BADMS RBAC permission assignments"
+        },
+        {
+          "code": "badms.security_policy.manage",
+          "label": "Define and enforce security policies"
+        },
+        {
+          "code": "badms.report.department",
+          "label": "View departmental operational reports"
+        }
+      ],
+      "scope_permissions": [],
+      "system_permissions": [
+        "badms.audit.record",
+        "badms.backup.run_scheduled",
+        "badms.storage.monitor"
+      ]
+    },
     "directory": {
       "grants": {
         "Dean Academic": [
@@ -39,13 +304,6 @@
         "Dean Academic": [
           "placement_cell.academic_directory.view",
           "placement_cell.announcement.publish",
-          "placement_cell.application.view",
-          "placement_cell.job_posting.view",
-          "placement_cell.report.view"
-        ],
-        "acadadmin": [
-          "placement_cell.academic_directory.view",
-          "placement_cell.application.review",
           "placement_cell.application.view",
           "placement_cell.job_posting.view",
           "placement_cell.report.view"
@@ -91,12 +349,109 @@
       },
       "module_grants": [
         "Dean Academic",
-        "acadadmin",
         "placement_chairman",
         "placement_coordinator",
         "placement_officer",
         "student"
       ],
+      "nav": {
+        "base_path": "/placement",
+        "icon": "Briefcase",
+        "items": [
+          {
+            "code": "placement.registration",
+            "icon": "Checks",
+            "label": "Season Registration",
+            "required_permission": "placement_cell.registration.self",
+            "sort_order": 5,
+            "to": "/placement/registration"
+          },
+          {
+            "code": "placement.postings",
+            "icon": "ClipboardText",
+            "label": "Opportunities",
+            "required_permission": "placement_cell.job_posting.view",
+            "sort_order": 10,
+            "to": "/placement/postings"
+          },
+          {
+            "code": "placement.mine",
+            "icon": "UserCheck",
+            "label": "My Applications",
+            "required_permission": "placement_cell.application.view_self",
+            "sort_order": 20,
+            "to": "/placement/mine"
+          },
+          {
+            "code": "placement.offers",
+            "icon": "Signature",
+            "label": "My Offers",
+            "required_permission": "placement_cell.offer.respond",
+            "sort_order": 30,
+            "to": "/placement/offers"
+          },
+          {
+            "code": "placement.applications",
+            "icon": "Users",
+            "label": "Applications",
+            "required_permission": "placement_cell.application.view",
+            "sort_order": 50,
+            "to": "/placement/applications"
+          },
+          {
+            "code": "placement.registrations",
+            "icon": "Checks",
+            "label": "Registrations",
+            "required_permission": "placement_cell.registration.manage",
+            "sort_order": 55,
+            "to": "/placement/registration-approvals"
+          },
+          {
+            "code": "placement.companies",
+            "icon": "Buildings",
+            "label": "Companies",
+            "required_permission": "placement_cell.company.manage",
+            "sort_order": 60,
+            "to": "/placement/companies"
+          },
+          {
+            "code": "placement.interviews",
+            "icon": "CalendarBlank",
+            "label": "Interviews",
+            "required_permission": "placement_cell.interview.schedule",
+            "sort_order": 70,
+            "to": "/placement/interviews"
+          },
+          {
+            "code": "placement.announcements",
+            "icon": "Megaphone",
+            "label": "Announcements",
+            "required_permission": "placement_cell.announcement.publish",
+            "sort_order": 80,
+            "to": "/placement/announcements"
+          },
+          {
+            "code": "placement.cpi",
+            "icon": "GraduationCap",
+            "label": "Student CPI",
+            "required_permission": "placement_cell.academic_directory.view",
+            "sort_order": 85,
+            "to": "/placement/students-cpi"
+          },
+          {
+            "code": "placement.reports",
+            "icon": "ChartBar",
+            "label": "Reports",
+            "required_permission": "placement_cell.report.view",
+            "sort_order": 90,
+            "to": "/placement/reports"
+          }
+        ],
+        "label": "Placement Cell",
+        "nav_section": "Placement",
+        "sort_order": 10,
+        "status": "active"
+      },
       "permissions": [
         {
           "code": "placement_cell.job_posting.view",
@@ -190,5 +545,6 @@
       ]
     }
   },
-  "version": 1
+  "publisher": "integrated",
+  "version": 2
 }

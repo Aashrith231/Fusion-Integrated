@@ -1,0 +1,596 @@
+[
+ {
+  "test_id": "FR-001",
+  "source_id": "AFR-BA-001",
+  "purpose": "Only SysAdmin/SuperAdmin trigger a manual backup",
+  "preconditions": "Sessions for a sysadmin and for a student; a reachable repository",
+  "action_or_input": "Trigger manual backup as sysadmin; then as student",
+  "expected_result": "SysAdmin's trigger succeeds; the student's is refused and no backup row is created",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "FR-002",
+  "source_id": "AFR-BA-002",
+  "purpose": "A manual trigger captures the current timestamp and artifacts",
+  "preconditions": "SysAdmin session, reachable repository",
+  "action_or_input": "Trigger manual backup",
+  "expected_result": "A backup row exists with started_at current and the artifact captured",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-003",
+  "source_id": "AFR-BA-003",
+  "purpose": "The dump is saved with its timestamp",
+  "preconditions": "SysAdmin session, reachable repository",
+  "action_or_input": "Trigger manual backup",
+  "expected_result": "The dump artifact is saved and referenced with its timestamp",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-004",
+  "source_id": "AFR-BA-004",
+  "purpose": "The outcome is recorded as Success or Failure",
+  "preconditions": "SysAdmin session; a working and a failing repository",
+  "action_or_input": "Trigger one backup against each",
+  "expected_result": "First row records Success; second records Failure",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-005",
+  "source_id": "AFR-BA-005",
+  "purpose": "A failed backup marks Failed and alerts the SysAdmin",
+  "preconditions": "SysAdmin session, an unreachable repository",
+  "action_or_input": "Trigger a backup that cannot be created",
+  "expected_result": "The row is Failed and a SysAdmin alert is queued",
+  "test_type": "negative"
+ },
+ {
+  "test_id": "FR-006",
+  "source_id": "AFR-BA-006",
+  "purpose": "Automatic backups run at scheduled times without user intervention",
+  "preconditions": "A due daily schedule; no actor present",
+  "action_or_input": "Run the scheduled-backup job at the due time",
+  "expected_result": "A scheduled backup row is created with no triggering user",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-007",
+  "source_id": "AFR-BA-007",
+  "purpose": "Eligible datasets are identified from the applicable schedule",
+  "preconditions": "A due schedule with a dataset and classification filter",
+  "action_or_input": "Run the scheduled-backup job",
+  "expected_result": "The run names the eligible dataset(s) from the effective schedule",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-008",
+  "source_id": "AFR-BA-008",
+  "purpose": "Eligible data is transferred to backup recovery storage",
+  "preconditions": "A due schedule and a reachable repository",
+  "action_or_input": "Run the scheduled-backup job",
+  "expected_result": "The artifact is written to backup storage and recorded on the row",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-009",
+  "source_id": "AFR-BA-009",
+  "purpose": "Integrity/consistency is verified during automatic backup",
+  "preconditions": "A due schedule, reachable repository",
+  "action_or_input": "Run the scheduled-backup job",
+  "expected_result": "The row records integrity_verified = true after the check",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-010",
+  "source_id": "AFR-BA-010",
+  "purpose": "The verified automatic backup is logged with timestamp and status",
+  "preconditions": "A due schedule, reachable repository",
+  "action_or_input": "Run the scheduled-backup job",
+  "expected_result": "The row has kind=scheduled, a started timestamp and terminal status",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-011",
+  "source_id": "AFR-BA-011",
+  "purpose": "A scheduled run executes only when the repository is scheduled and reachable",
+  "preconditions": "A due schedule pointing at an unreachable repository",
+  "action_or_input": "Run the scheduled-backup job",
+  "expected_result": "No successful transfer; the failure is recorded",
+  "test_type": "boundary"
+ },
+ {
+  "test_id": "FR-012",
+  "source_id": "AFR-BA-012",
+  "purpose": "Schedules are visible to an authorized SysAdmin only",
+  "preconditions": "Existing schedules; SysAdmin and plain-user sessions",
+  "action_or_input": "List schedules as each",
+  "expected_result": "The SysAdmin sees them; the plain user is refused",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "FR-013",
+  "source_id": "AFR-BA-013",
+  "purpose": "A SysAdmin creates/modifies a local schedule (frequency, time, filters)",
+  "preconditions": "SysAdmin session, a reachable repository",
+  "action_or_input": "Create a local daily schedule; then modify its run time",
+  "expected_result": "Both succeed; the row carries frequency, time and filters",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-014",
+  "source_id": "AFR-BA-014",
+  "purpose": "Invalid/conflicting schedule configurations are rejected unapplied",
+  "preconditions": "An active local schedule for dataset D at 02:00",
+  "action_or_input": "Submit a conflicting second schedule and one with an unknown frequency",
+  "expected_result": "Both refused; no schedule row or change results",
+  "test_type": "negative"
+ },
+ {
+  "test_id": "FR-015",
+  "source_id": "AFR-BA-015",
+  "purpose": "A validated schedule is applied",
+  "preconditions": "A valid new local schedule",
+  "action_or_input": "Create it",
+  "expected_result": "The schedule row exists and is active",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-016",
+  "source_id": "AFR-BA-016",
+  "purpose": "Each schedule configuration change is logged",
+  "preconditions": "An existing schedule",
+  "action_or_input": "Modify it",
+  "expected_result": "A change-log entry records the modification",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-017",
+  "source_id": "AFR-BA-017",
+  "purpose": "Backup status and history are maintained",
+  "preconditions": "Several backup rows",
+  "action_or_input": "Read the backup list",
+  "expected_result": "All rows with status/history are returned",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-018",
+  "source_id": "AFR-BA-018",
+  "purpose": "Users and authorized administrators view backup history in scope",
+  "preconditions": "Backup rows; a plain user and a sysadmin",
+  "action_or_input": "Both read the backup list",
+  "expected_result": "Both see the history; a user without the module grant is refused",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "FR-019",
+  "source_id": "AFR-BA-019",
+  "purpose": "An authenticated user can initiate a secure archival request",
+  "preconditions": "An authenticated user in the module",
+  "action_or_input": "Submit an archival request with required metadata",
+  "expected_result": "The request is created and routed for HoD review",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-020",
+  "source_id": "AFR-BA-020",
+  "purpose": "The request captures name, date, owners, type, reason and attachment",
+  "preconditions": "An authenticated user",
+  "action_or_input": "Submit with all stated fields",
+  "expected_result": "The stored request carries every stated field",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-021",
+  "source_id": "AFR-BA-021",
+  "purpose": "Submission is validated; failure shows errors and changes nothing",
+  "preconditions": "Incomplete metadata; a user over quota",
+  "action_or_input": "Submit an invalid request and an over-quota request",
+  "expected_result": "Both refused with errors; no request row or state change",
+  "test_type": "negative"
+ },
+ {
+  "test_id": "FR-022",
+  "source_id": "AFR-BA-022",
+  "purpose": "A successful submission sets status Submitted",
+  "preconditions": "A valid submission",
+  "action_or_input": "Submit",
+  "expected_result": "The request's status is Submitted",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-023",
+  "source_id": "AFR-BA-023",
+  "purpose": "A submitted request routes to the requester's HoD",
+  "preconditions": "A submitted request in department D; the HoD of D",
+  "action_or_input": "The HoD lists their review queue",
+  "expected_result": "The request appears in the routed HoD's queue",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-024",
+  "source_id": "AFR-BA-024",
+  "purpose": "The routed HoD can review details/attachments before deciding",
+  "preconditions": "A submitted request; its HoD",
+  "action_or_input": "Fetch the request detail as the HoD",
+  "expected_result": "Details and attachments are visible to the routed HoD",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-025",
+  "source_id": "AFR-BA-025",
+  "purpose": "The HoD approves/rejects and the decision is recorded",
+  "preconditions": "Two submitted requests; their HoD",
+  "action_or_input": "Approve one and reject the other",
+  "expected_result": "Statuses move accordingly and both decisions are recorded",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-026",
+  "source_id": "AFR-BA-026",
+  "purpose": "Only the requester's-department HoD may decide",
+  "preconditions": "A request in department D; the HoD of a different department",
+  "action_or_input": "The foreign HoD attempts the decision",
+  "expected_result": "Refused; the request is unchanged",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "FR-027",
+  "source_id": "AFR-BA-027",
+  "purpose": "After HoD approval the request routes to the SysAdmin",
+  "preconditions": "An approved request",
+  "action_or_input": "The SysAdmin lists the classification window",
+  "expected_result": "The approved request is visible for classification",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-028",
+  "source_id": "AFR-BA-028",
+  "purpose": "The SysAdmin classifies as Critical/Sensitive/Routine/Archival",
+  "preconditions": "A hod_approved request; SysAdmin session",
+  "action_or_input": "Classify with each permitted value",
+  "expected_result": "Each accepted classification is stored as authoritative",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-029",
+  "source_id": "AFR-BA-029",
+  "purpose": "No initial classification defaults to Routine",
+  "preconditions": "A submission without an initial classification",
+  "action_or_input": "Submit",
+  "expected_result": "The stored initial classification is Routine",
+  "test_type": "boundary"
+ },
+ {
+  "test_id": "FR-030",
+  "source_id": "AFR-BA-030",
+  "purpose": "Security and retention rules follow the authoritative classification",
+  "preconditions": "A hod_approved request",
+  "action_or_input": "Classify as Sensitive",
+  "expected_result": "The request carries the Sensitive retention rule",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-031",
+  "source_id": "AFR-BA-031",
+  "purpose": "A Sensitive classification routes the request to IT Security",
+  "preconditions": "A hod_approved request",
+  "action_or_input": "Classify as Sensitive",
+  "expected_result": "Status becomes routed to IT Security for encryption",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-032",
+  "source_id": "AFR-BA-032",
+  "purpose": "IT Security can configure encryption for Sensitive data",
+  "preconditions": "A routed_to_security request; IT Security session",
+  "action_or_input": "Configure encryption",
+  "expected_result": "The configuration succeeds and is recorded",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-033",
+  "source_id": "AFR-BA-033",
+  "purpose": "After encryption is configured the encrypted archive is created and recorded",
+  "preconditions": "A routed_to_security request",
+  "action_or_input": "Configure encryption successfully",
+  "expected_result": "An encrypted archive artifact is created and the outcome recorded",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-034",
+  "source_id": "AFR-BA-034",
+  "purpose": "Sensitive data uses AES-256 at rest and in transit",
+  "preconditions": "A routed_to_security request",
+  "action_or_input": "Configure encryption",
+  "expected_result": "The recorded algorithm is AES-256 (at rest and in transit)",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-035",
+  "source_id": "AFR-BA-035",
+  "purpose": "A user tracks status/history of their archival request",
+  "preconditions": "A submitted request; its owner",
+  "action_or_input": "Fetch the request and its history as the owner",
+  "expected_result": "Status and decision history are visible to the owner",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-036",
+  "source_id": "AFR-BA-036",
+  "purpose": "Submission and decision notifications are sent at the relevant stages",
+  "preconditions": "A submission then a HoD decision",
+  "action_or_input": "Submit; then decide",
+  "expected_result": "The requester's queue gains the submission and decision notifications",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-037",
+  "source_id": "AFR-BA-037",
+  "purpose": "The Super Admin performs a special archival operation",
+  "preconditions": "Super Admin session; an offline request",
+  "action_or_input": "Perform the special archival",
+  "expected_result": "The operation succeeds and is recorded",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-038",
+  "source_id": "AFR-BA-038",
+  "purpose": "Only the Super Admin may perform special archival",
+  "preconditions": "SysAdmin and plain-user sessions",
+  "action_or_input": "Both attempt the special archival operation",
+  "expected_result": "Both attempts are refused",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "FR-039",
+  "source_id": "AFR-BA-039",
+  "purpose": "The special archival records its outcome and audit event",
+  "preconditions": "A performed special archival",
+  "action_or_input": "Read the records and the audit log",
+  "expected_result": "The outcome row and a corresponding audit event exist",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-040",
+  "source_id": "AFR-BA-040",
+  "purpose": "A user can request restoration of archived data",
+  "preconditions": "Archived data owned by the user",
+  "action_or_input": "Request restoration",
+  "expected_result": "The restoration request is created in the appropriate starting state",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-041",
+  "source_id": "AFR-BA-041",
+  "purpose": "Sensitive restoration requires SysAdmin approval first",
+  "preconditions": "A restoration request for Sensitive data",
+  "action_or_input": "Execute before approval",
+  "expected_result": "Execution is refused until approval is recorded",
+  "test_type": "negative"
+ },
+ {
+  "test_id": "FR-042",
+  "source_id": "AFR-BA-042",
+  "purpose": "Non-Sensitive data restores through the standard path",
+  "preconditions": "Archived non-Sensitive data",
+  "action_or_input": "Request and execute restoration",
+  "expected_result": "The restoration completes without an approval step",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-043",
+  "source_id": "AFR-BA-043",
+  "purpose": "A user tracks restoration-request status",
+  "preconditions": "A restoration request; its owner",
+  "action_or_input": "Fetch it as the owner",
+  "expected_result": "Status is visible to the owner",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-044",
+  "source_id": "AFR-BA-045",
+  "purpose": "When the quota is full the user can submit an extension request",
+  "preconditions": "A user at 100% quota",
+  "action_or_input": "Submit an extension request with justification",
+  "expected_result": "The request is created and routed to the HoD",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-045",
+  "source_id": "AFR-BA-046",
+  "purpose": "The extension request is validated against current usage",
+  "preconditions": "A user below full quota",
+  "action_or_input": "Submit an extension request",
+  "expected_result": "Refused with an explanatory error; nothing is created",
+  "test_type": "negative"
+ },
+ {
+  "test_id": "FR-046",
+  "source_id": "AFR-BA-047",
+  "purpose": "A valid extension request routes to the user's HoD",
+  "preconditions": "A submitted extension request; the HoD of the user's department",
+  "action_or_input": "The HoD lists the extension queue",
+  "expected_result": "The request appears in the routed HoD's queue",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-047",
+  "source_id": "AFR-BA-048",
+  "purpose": "The HoD reviews details, attachment, infrastructure and justification",
+  "preconditions": "A queued extension request; its HoD",
+  "action_or_input": "Fetch the request and the infrastructure picture as the HoD",
+  "expected_result": "The stated review inputs are visible",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-048",
+  "source_id": "AFR-BA-049",
+  "purpose": "The HoD approves/rejects and the decision is recorded",
+  "preconditions": "Two queued extension requests; their HoD",
+  "action_or_input": "Approve one and reject the other",
+  "expected_result": "Statuses move and both decisions are recorded",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-049",
+  "source_id": "AFR-BA-051",
+  "purpose": "Storage thresholds are monitored for all users",
+  "preconditions": "Profiles at different usage levels",
+  "action_or_input": "Run the threshold monitor",
+  "expected_result": "Every profile's full-quota status is refreshed",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-050",
+  "source_id": "AFR-BA-052",
+  "purpose": "Requested storage is validated against available infrastructure",
+  "preconditions": "Full-quota user; infrastructure smaller than the request",
+  "action_or_input": "Submit an extension exceeding available infrastructure",
+  "expected_result": "Refused with an explanatory error; nothing is created",
+  "test_type": "boundary"
+ },
+ {
+  "test_id": "FR-051",
+  "source_id": "AFR-BA-053",
+  "purpose": "The Super Admin defines global schedules and default policies",
+  "preconditions": "Super Admin and SysAdmin sessions",
+  "action_or_input": "Define the global schedule as each",
+  "expected_result": "The Super Admin's definition succeeds; the SysAdmin's is refused",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "FR-052",
+  "source_id": "AFR-BA-054",
+  "purpose": "The global schedule applies where no valid local override exists",
+  "preconditions": "A global schedule; a dataset with no local schedule",
+  "action_or_input": "Evaluate the effective schedule for that dataset",
+  "expected_result": "The effective schedule is the global one",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-053",
+  "source_id": "AFR-BA-055",
+  "purpose": "A local schedule overrides the global schedule for its dataset",
+  "preconditions": "A global schedule and a local schedule for dataset D",
+  "action_or_input": "Evaluate the effective schedule for D",
+  "expected_result": "The effective schedule is the local one",
+  "test_type": "boundary"
+ },
+ {
+  "test_id": "FR-054",
+  "source_id": "AFR-BA-056",
+  "purpose": "Retention rules are enforced by classification",
+  "preconditions": "Each classification value",
+  "action_or_input": "Classify archived data with each value",
+  "expected_result": "Each carries its classification's retention rule",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-055",
+  "source_id": "AFR-BA-057",
+  "purpose": "A failed backup alerts the SysAdmin within five minutes",
+  "preconditions": "A backup marked Failed",
+  "action_or_input": "Run the notification delivery beat",
+  "expected_result": "The SysAdmin alert is queued for delivery within the five-minute window",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-056",
+  "source_id": "AFR-BA-058",
+  "purpose": "Three consecutive failures escalate to the Director of IT",
+  "preconditions": "Two recorded consecutive failures",
+  "action_or_input": "Record a third consecutive failure",
+  "expected_result": "An escalation to the Director of IT is queued, exactly once",
+  "test_type": "boundary"
+ },
+ {
+  "test_id": "FR-057",
+  "source_id": "AFR-BA-059",
+  "purpose": "Backup status/completion notifications issue, including failure alerts",
+  "preconditions": "A successful and a failed backup",
+  "action_or_input": "Complete both runs",
+  "expected_result": "The corresponding status notification is queued",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-058",
+  "source_id": "AFR-BA-060",
+  "purpose": "The requester is notified on extension submission and HoD decision",
+  "preconditions": "A full-quota user; their HoD",
+  "action_or_input": "Submit; then record the HoD decision",
+  "expected_result": "The requester's queue gains both notifications",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-059",
+  "source_id": "AFR-BA-061",
+  "purpose": "Audit logs record the required event kinds with required fields",
+  "preconditions": "Actions of each kind",
+  "action_or_input": "Perform actions across the module",
+  "expected_result": "Audit rows exist with timestamp, actor id, action and outcome",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-060",
+  "source_id": "AFR-BA-062",
+  "purpose": "A SysAdmin can view audit logs and activity histories",
+  "preconditions": "Audit rows; SysAdmin and plain-user sessions",
+  "action_or_input": "Read the audit log as each",
+  "expected_result": "The SysAdmin's read succeeds; the plain user's is refused",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "FR-061",
+  "source_id": "AFR-BA-063",
+  "purpose": "IT Security audits data-activity logs for unauthorized access",
+  "preconditions": "Audit rows; IT Security session",
+  "action_or_input": "Read the security audit",
+  "expected_result": "The security audit view returns activity data",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-062",
+  "source_id": "AFR-BA-064",
+  "purpose": "A HoD views operational reports for their own department",
+  "preconditions": "Requests across two departments; the HoD of D",
+  "action_or_input": "Request the report for D; then for another department",
+  "expected_result": "D's report succeeds; the foreign department is refused",
+  "test_type": "authorization"
+ },
+ {
+  "test_id": "FR-063",
+  "source_id": "AFR-BA-065",
+  "purpose": "Operational visibility into backup operations",
+  "preconditions": "Backup rows",
+  "action_or_input": "Read the backup operations summary as an authorized admin",
+  "expected_result": "The summary is returned",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-064",
+  "source_id": "AFR-BA-066",
+  "purpose": "IT Security manages user permissions through RBAC",
+  "preconditions": "IT Security session; a target user",
+  "action_or_input": "Grant a BADMS permission, then revoke it",
+  "expected_result": "Both succeed and are recorded",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-065",
+  "source_id": "AFR-BA-067",
+  "purpose": "IT Security defines and enforces security policies",
+  "preconditions": "IT Security session",
+  "action_or_input": "Define a policy and update it",
+  "expected_result": "Both succeed; the policy is stored",
+  "test_type": "positive"
+ },
+ {
+  "test_id": "FR-066",
+  "source_id": "AFR-BA-068",
+  "purpose": "Role separation and departmental scope are enforced",
+  "preconditions": "A HoD, a SysAdmin, an IT Security member; requests in two departments",
+  "action_or_input": "Attempt cross-department and cross-role actions",
+  "expected_result": "Each out-of-scope attempt is refused",
+  "test_type": "authorization"
+ }
+]
