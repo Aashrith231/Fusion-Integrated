@@ -1,0 +1,29 @@
+import pytest
+from django.utils import timezone
+
+from modules.badms.models import Backup, NotificationOutbox
+from modules.badms.services import backups as backup_service
+from .helpers import SYSADMIN_PERMS, actor, now_minus
+
+pytestmark = pytest.mark.django_db
+
+
+def test_debug_streak(repo, monkeypatch):
+    monkeypatch.setattr(backup_service, "_write_state_dump",
+                        lambda b: (_ for _ in ()).throw(OSError("boom")))
+    for j in range(2):
+        backup_service.trigger_manual_backup(
+            actor=actor(uid=9, perms=SYSADMIN_PERMS, kind="staff"),
+            repository=repo,
+            started_at=now_minus(10) + timezone.timedelta(minutes=j))
+    backup_service.trigger_manual_backup(
+        actor=actor(uid=9, perms=SYSADMIN_PERMS, kind="staff"), repository=repo)
+    for j in range(2):
+        backup_service.trigger_manual_backup(
+            actor=actor(uid=9, perms=SYSADMIN_PERMS, kind="staff"),
+            repository=repo,
+            started_at=now_minus(1) + timezone.timedelta(minutes=j))
+    for b in Backup.objects.order_by("started_at"):
+        print("DEBUG", b.pk, b.status, b.started_at, "cf=", b.consecutive_failures)
+    for n in NotificationOutbox.objects.filter(topic="backup.escalated"):
+        print("DEBUG outbox", n.dedupe_key)

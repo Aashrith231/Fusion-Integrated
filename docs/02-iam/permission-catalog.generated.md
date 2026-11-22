@@ -7,6 +7,30 @@ guards on, and every designation column is one the IAM can grant.
 For the intended taxonomy of modules not yet built, see
 [permission-catalog.md](permission-catalog.md).
 
+## `badms`
+
+| Code | What it allows | Held by |
+|---|---|---|
+| `badms.backup.view` | View backup status and history | `faculty`, `hod`, `it_security`, `staff`, `student`, `super_admin`, `sysadmin` |
+| `badms.backup.trigger` | Trigger a manual backup | `super_admin`, `sysadmin` |
+| `badms.schedule.manage` | Create and modify local backup schedules | `super_admin`, `sysadmin` |
+| `badms.schedule.manage_global` | Define institution-wide global backup schedules and defaults | `super_admin` |
+| `badms.archival.submit` | Submit secure archival requests | `faculty`, `hod`, `staff`, `student` |
+| `badms.archival.decide` | Approve or reject archival requests for one's own department | `hod` |
+| `badms.archival.classify` | Assign the authoritative archival classification | `super_admin`, `sysadmin` |
+| `badms.encryption.manage` | Configure encryption for Sensitive data | `it_security` |
+| `badms.special_archival.perform` | Perform special archival operations | `super_admin` |
+| `badms.restoration.request` | Request restoration of archived data | `faculty`, `hod`, `staff`, `student` |
+| `badms.restoration.approve` | Approve Sensitive data restoration | `super_admin`, `sysadmin` |
+| `badms.restoration.execute` | Execute technical restoration | `super_admin`, `sysadmin` |
+| `badms.storage.request` | Submit storage-extension requests | `faculty`, `hod`, `staff`, `student` |
+| `badms.storage.decide` | Decide storage-extension requests for one's own department | `hod` |
+| `badms.audit.view` | View audit logs and activity history | `super_admin`, `sysadmin` |
+| `badms.security.audit` | Audit data activity and review security reports | `it_security` |
+| `badms.rbac.manage` | Manage BADMS RBAC permission assignments | `it_security` |
+| `badms.security_policy.manage` | Define and enforce security policies | `it_security` |
+| `badms.report.department` | View departmental operational reports | `hod` |
+
 ## `directory`
 
 | Code | What it allows | Held by |

@@ -1,5 +1,156 @@
 {
   "modules": {
+    "badms": {
+      "grants": {
+        "faculty": [
+          "badms.archival.submit",
+          "badms.backup.view",
+          "badms.restoration.request",
+          "badms.storage.request"
+        ],
+        "hod": [
+          "badms.archival.decide",
+          "badms.archival.submit",
+          "badms.backup.view",
+          "badms.report.department",
+          "badms.restoration.request",
+          "badms.storage.decide",
+          "badms.storage.request"
+        ],
+        "it_security": [
+          "badms.backup.view",
+          "badms.encryption.manage",
+          "badms.rbac.manage",
+          "badms.security.audit",
+          "badms.security_policy.manage"
+        ],
+        "staff": [
+          "badms.archival.submit",
+          "badms.backup.view",
+          "badms.restoration.request",
+          "badms.storage.request"
+        ],
+        "student": [
+          "badms.archival.submit",
+          "badms.backup.view",
+          "badms.restoration.request",
+          "badms.storage.request"
+        ],
+        "super_admin": [
+          "badms.archival.classify",
+          "badms.audit.view",
+          "badms.backup.trigger",
+          "badms.backup.view",
+          "badms.restoration.approve",
+          "badms.restoration.execute",
+          "badms.schedule.manage",
+          "badms.schedule.manage_global",
+          "badms.special_archival.perform"
+        ],
+        "sysadmin": [
+          "badms.archival.classify",
+          "badms.audit.view",
+          "badms.backup.trigger",
+          "badms.backup.view",
+          "badms.restoration.approve",
+          "badms.restoration.execute",
+          "badms.schedule.manage"
+        ]
+      },
+      "module_grants": [
+        "faculty",
+        "hod",
+        "it_security",
+        "staff",
+        "student",
+        "super_admin",
+        "sysadmin"
+      ],
+      "permissions": [
+        {
+          "code": "badms.backup.view",
+          "label": "View backup status and history"
+        },
+        {
+          "code": "badms.backup.trigger",
+          "label": "Trigger a manual backup"
+        },
+        {
+          "code": "badms.schedule.manage",
+          "label": "Create and modify local backup schedules"
+        },
+        {
+          "code": "badms.schedule.manage_global",
+          "label": "Define institution-wide global backup schedules and defaults"
+        },
+        {
+          "code": "badms.archival.submit",
+          "label": "Submit secure archival requests"
+        },
+        {
+          "code": "badms.archival.decide",
+          "label": "Approve or reject archival requests for one's own department"
+        },
+        {
+          "code": "badms.archival.classify",
+          "label": "Assign the authoritative archival classification"
+        },
+        {
+          "code": "badms.encryption.manage",
+          "label": "Configure encryption for Sensitive data"
+        },
+        {
+          "code": "badms.special_archival.perform",
+          "label": "Perform special archival operations"
+        },
+        {
+          "code": "badms.restoration.request",
+          "label": "Request restoration of archived data"
+        },
+        {
+          "code": "badms.restoration.approve",
+          "label": "Approve Sensitive data restoration"
+        },
+        {
+          "code": "badms.restoration.execute",
+          "label": "Execute technical restoration"
+        },
+        {
+          "code": "badms.storage.request",
+          "label": "Submit storage-extension requests"
+        },
+        {
+          "code": "badms.storage.decide",
+          "label": "Decide storage-extension requests for one's own department"
+        },
+        {
+          "code": "badms.audit.view",
+          "label": "View audit logs and activity history"
+        },
+        {
+          "code": "badms.security.audit",
+          "label": "Audit data activity and review security reports"
+        },
+        {
+          "code": "badms.rbac.manage",
+          "label": "Manage BADMS RBAC permission assignments"
+        },
+        {
+          "code": "badms.security_policy.manage",
+          "label": "Define and enforce security policies"
+        },
+        {
+          "code": "badms.report.department",
+          "label": "View departmental operational reports"
+        }
+      ],
+      "scope_permissions": [],
+      "system_permissions": [
+        "badms.audit.record",
+        "badms.backup.run_scheduled",
+        "badms.storage.monitor"
+      ]
+    },
     "directory": {
       "grants": {
         "Dean Academic": [

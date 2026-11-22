@@ -90,6 +90,7 @@ PLATFORM_MODULES = [
 # See docs/03-platform/module-authoring-guide.md to add one.
 DOMAIN_MODULES = [
     "modules.placement",
+    "modules.badms",
 ]
 
 INSTALLED_APPS = (DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -174,6 +175,30 @@ EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", False)
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL",
                          "Placement Cell <placement@iiitdmj.ac.in>")
 
+# -- BADMS ----------------------------------------------------------------------
+#: Who a backup failure alerts (BR-BA-014) and where the three-consecutive-
+#: failure escalation lands (BR-BA-015). Patchable in tests.
+BADMS_SYSADMIN_ALERT_EMAIL = env("BADMS_SYSADMIN_ALERT_EMAIL",
+                                 "sysadmin-alert@iiitdmj.ac.in")
+BADMS_DIRECTOR_IT_EMAIL = env("BADMS_DIRECTOR_IT_EMAIL",
+                              "director-it@iiitdmj.ac.in")
+BADMS_SECURITY_INBOX = env("BADMS_SECURITY_INBOX",
+                           "it-security@iiitdmj.ac.in")
+#: Where a routed request's notification lands when the HoD's address is not
+#: on record. `{department}` is lower-cased.
+BADMS_DEPARTMENT_INBOX_TEMPLATE = env(
+    "BADMS_DEPARTMENT_INBOX_TEMPLATE", "{department}-hod@iiitdmj.ac.in")
+#: Where backup artifacts and encrypted archives are written.
+BADMS_BACKUP_ROOT = env(
+    "BADMS_BACKUP_ROOT",
+    str(Path.home() / ".local" / "share" / "fusion-integrated" / "badms" / "backups"))
+BADMS_ARCHIVE_ROOT = env(
+    "BADMS_ARCHIVE_ROOT",
+    str(Path.home() / ".local" / "share" / "fusion-integrated" / "badms" / "archives"))
+BADMS_RESTORE_ROOT = env(
+    "BADMS_RESTORE_ROOT",
+    str(Path.home() / ".local" / "share" / "fusion-integrated" / "badms" / "restored"))
+
 #: Ceiling per worker pass, so a runaway loop cannot mail the institute.
 NOTIFY_MAX_PER_RUN = env_int("NOTIFY_MAX_PER_RUN", 500)
 #: Attempts before a notification is parked as failed for a human to look at.
@@ -230,6 +255,10 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Non-academic platform. Independent modules, one login.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "ENUM_NAME_OVERRIDES": {
+        "BadmsClassification": "modules.badms.models.ArchivalRequest.CLASSIFICATION",
+        "BadmsFrequency": "modules.badms.models.BackupSchedule.FREQUENCY",
+    },
 }
 
 CORS_ALLOW_ALL_ORIGINS = False
