@@ -46,6 +46,897 @@ paths:
               schema:
                 $ref: '#/components/schemas/Ok'
           description: ''
+  /api/v1/badms/archival:
+    get:
+      operationId: v1_badms_archival_list
+      description: |-
+        GET /badms/archival — every request this caller is authorised to see,
+        scoped by role and department (BR-BA-020).
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ArchivalRequest'
+          description: ''
+  /api/v1/badms/archival/{id}:
+    get:
+      operationId: v1_badms_archival_retrieve
+      description: |-
+        GET /badms/archival/<pk> — detail with decision history
+        (UC-BA-015).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivalRequest'
+          description: ''
+  /api/v1/badms/archival/{id}/classify:
+    post:
+      operationId: v1_badms_archival_classify_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Classification'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Classification'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Classification'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivalRequest'
+          description: ''
+  /api/v1/badms/archival/{id}/decide:
+    post:
+      operationId: v1_badms_archival_decide_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Decision'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Decision'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Decision'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivalRequest'
+          description: ''
+  /api/v1/badms/archival/{id}/encryption:
+    post:
+      operationId: v1_badms_archival_encryption_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Encryption'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Encryption'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Encryption'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivalRequest'
+          description: ''
+  /api/v1/badms/archival/mine:
+    get:
+      operationId: v1_badms_archival_mine_list
+      description: GET /badms/archival/mine — the requester's own tracking list.
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ArchivalRequest'
+          description: ''
+  /api/v1/badms/archival/submit:
+    post:
+      operationId: v1_badms_archival_submit_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchivalSubmit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArchivalSubmit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArchivalSubmit'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchivalRequest'
+          description: ''
+  /api/v1/badms/audit:
+    get:
+      operationId: v1_badms_audit_list
+      description: GET /badms/audit — audit logs and activity history (UC-BA-012).
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditEvent'
+          description: ''
+  /api/v1/badms/backups:
+    get:
+      operationId: v1_badms_backups_list
+      description: |-
+        GET /badms/backups — history and current status (UC-BA-014).
+
+        Status and history are visible in scope; the artifact path is
+        operational detail for those who run backups (BR-BA-020).
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Backup'
+          description: ''
+  /api/v1/badms/backups/manual:
+    post:
+      operationId: v1_badms_backups_manual_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualBackup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ManualBackup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ManualBackup'
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Backup'
+          description: ''
+  /api/v1/badms/me/requests:
+    get:
+      operationId: v1_badms_me_requests_list
+      description: |-
+        GET /badms/me/requests — one tracking view across archival, storage
+        and restoration requests (UC-BA-015).
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MyRequest'
+          description: ''
+  /api/v1/badms/reports/department:
+    get:
+      operationId: v1_badms_reports_department_retrieve
+      description: |-
+        GET /badms/reports/department?department=… — operational reports for
+        the HoD's own department (UC-BA-021).
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepartmentReport'
+          description: ''
+  /api/v1/badms/repositories:
+    get:
+      operationId: v1_badms_repositories_list
+      description: GET /badms/repositories — the targets schedules and manual runs
+        name.
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Repository'
+          description: ''
+  /api/v1/badms/restorations:
+    get:
+      operationId: v1_badms_restorations_list
+      description: GET /badms/restorations — scoped by role (UC-BA-016/017).
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Restoration'
+          description: ''
+  /api/v1/badms/restorations/{id}/decide:
+    post:
+      operationId: v1_badms_restorations_decide_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Decision'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Decision'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Decision'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restoration'
+          description: ''
+  /api/v1/badms/restorations/{id}/execute:
+    post:
+      operationId: v1_badms_restorations_execute_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restoration'
+          description: ''
+  /api/v1/badms/restorations/request:
+    post:
+      operationId: v1_badms_restorations_request_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestorationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RestorationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RestorationRequest'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Restoration'
+          description: ''
+  /api/v1/badms/schedules:
+    get:
+      operationId: v1_badms_schedules_list
+      description: GET /badms/schedules — current schedules (AFR-BA-012).
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+          description: ''
+  /api/v1/badms/schedules/{id}/changes:
+    get:
+      operationId: v1_badms_schedules_changes_list
+      description: |-
+        GET /badms/schedules/<pk>/changes — the configuration trail
+        (AFR-BA-016).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScheduleChange'
+          description: ''
+  /api/v1/badms/schedules/{id}/modify:
+    patch:
+      operationId: v1_badms_schedules_modify_partial_update
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedScheduleWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedScheduleWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedScheduleWrite'
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+          description: ''
+  /api/v1/badms/schedules/create:
+    post:
+      operationId: v1_badms_schedules_create_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ScheduleWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ScheduleWrite'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+          description: ''
+  /api/v1/badms/schedules/global:
+    get:
+      operationId: v1_badms_schedules_global_retrieve
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+          description: ''
+    put:
+      operationId: v1_badms_schedules_global_update
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GlobalSchedule'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GlobalSchedule'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GlobalSchedule'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+          description: ''
+  /api/v1/badms/security/audit:
+    get:
+      operationId: v1_badms_security_audit_list
+      description: |-
+        GET /badms/security/audit — the security slice and the unauthorised-
+        access candidates (UC-BA-013).
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditEvent'
+          description: ''
+  /api/v1/badms/security/policies:
+    get:
+      operationId: v1_badms_security_policies_list
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SecurityPolicy'
+          description: ''
+    post:
+      operationId: v1_badms_security_policies_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SecurityPolicyWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SecurityPolicyWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SecurityPolicyWrite'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityPolicy'
+          description: ''
+  /api/v1/badms/security/policies/{id}:
+    patch:
+      operationId: v1_badms_security_policies_partial_update
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSecurityPolicyPatch'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSecurityPolicyPatch'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSecurityPolicyPatch'
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityPolicy'
+          description: ''
+  /api/v1/badms/security/rbac:
+    get:
+      operationId: v1_badms_security_rbac_list
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RbacAssignment'
+          description: ''
+    post:
+      operationId: v1_badms_security_rbac_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RbacWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RbacWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RbacWrite'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RbacAssignment'
+          description: ''
+  /api/v1/badms/special-archival:
+    get:
+      operationId: v1_badms_special_archival_list
+      description: GET /badms/special-archival — the Super Admin's operation records.
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpecialArchival'
+          description: ''
+  /api/v1/badms/special-archival/perform:
+    post:
+      operationId: v1_badms_special_archival_perform_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpecialArchivalWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SpecialArchivalWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SpecialArchivalWrite'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecialArchival'
+          description: ''
+  /api/v1/badms/storage/extensions:
+    get:
+      operationId: v1_badms_storage_extensions_list
+      description: GET /badms/storage/extensions — the department's queue for the
+        HoD.
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StorageExtension'
+          description: ''
+  /api/v1/badms/storage/extensions/{id}/decide:
+    post:
+      operationId: v1_badms_storage_extensions_decide_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Decision'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Decision'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Decision'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageExtension'
+          description: ''
+  /api/v1/badms/storage/extensions/mine:
+    get:
+      operationId: v1_badms_storage_extensions_mine_list
+      description: GET /badms/storage/extensions/mine — the requester's own requests.
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StorageExtension'
+          description: ''
+  /api/v1/badms/storage/extensions/submit:
+    post:
+      operationId: v1_badms_storage_extensions_submit_create
+      description: |-
+        A service raising LookupError means "the caller may not see that
+        row" — mapped to 404 here, once, instead of in every view.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StorageExtensionWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StorageExtensionWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StorageExtensionWrite'
+        required: true
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageExtension'
+          description: ''
+  /api/v1/badms/storage/infrastructure:
+    get:
+      operationId: v1_badms_storage_infrastructure_retrieve
+      description: |-
+        GET /badms/storage/infrastructure — the picture a HoD reviews a
+        request against (BR-BA-017).
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Infrastructure'
+          description: ''
+  /api/v1/badms/storage/me:
+    get:
+      operationId: v1_badms_storage_me_retrieve
+      description: GET /badms/storage/me — the caller's usage and threshold status.
+      tags:
+      - v1
+      security:
+      - iamSession: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageProfile'
+          description: ''
   /api/v1/directory/users:
     get:
       operationId: v1_directory_users_retrieve
@@ -1763,6 +2654,14 @@ components:
       - semester
       - semester_type
       - user_id
+    ActionEnum:
+      enum:
+      - grant
+      - revoke
+      type: string
+      description: |-
+        * `grant` - grant
+        * `revoke` - revoke
     AddCandidates:
       type: object
       properties:
@@ -1981,6 +2880,144 @@ components:
         * `pending` - Pending institute approval
         * `approved` - Approved
         * `rejected` - Rejected
+    ArchivalRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user_id:
+          type: integer
+          readOnly: true
+        file_name:
+          type: string
+          readOnly: true
+        file_date:
+          type: string
+          format: date
+          readOnly: true
+        owners:
+          type: string
+          readOnly: true
+        file_type:
+          type: string
+          readOnly: true
+        reason:
+          type: string
+          readOnly: true
+        attachment:
+          type: string
+          readOnly: true
+          description: Drive/file reference.
+        attachment_size_bytes:
+          type: integer
+          readOnly: true
+        initial_classification:
+          type: string
+          readOnly: true
+        department:
+          type: string
+          readOnly: true
+        classification:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ArchivalRequestStatusEnum'
+          readOnly: true
+        retention_rule:
+          type: string
+          readOnly: true
+        encryption_algorithm:
+          type: string
+          readOnly: true
+        encryption_key_ref:
+          type: string
+          readOnly: true
+        encrypted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        archive_ref:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - archive_ref
+      - attachment
+      - attachment_size_bytes
+      - classification
+      - created_at
+      - department
+      - encrypted_at
+      - encryption_algorithm
+      - encryption_key_ref
+      - file_date
+      - file_name
+      - file_type
+      - id
+      - initial_classification
+      - owners
+      - reason
+      - retention_rule
+      - status
+      - user_id
+    ArchivalRequestStatusEnum:
+      enum:
+      - submitted
+      - rejected
+      - hod_approved
+      - routed_to_security
+      - classified
+      - encrypted
+      - encryption_failed
+      type: string
+      description: |-
+        * `submitted` - Submitted
+        * `rejected` - Rejected
+        * `hod_approved` - HoD Approved
+        * `routed_to_security` - Routed to IT Security
+        * `classified` - Classified
+        * `encrypted` - Sensitive Archive Encrypted
+        * `encryption_failed` - Encryption Failed
+    ArchivalSubmit:
+      type: object
+      properties:
+        file_name:
+          type: string
+          maxLength: 200
+        file_date:
+          type: string
+          format: date
+        owners:
+          type: string
+          maxLength: 300
+        file_type:
+          type: string
+          maxLength: 60
+        reason:
+          type: string
+        attachment:
+          type: string
+          maxLength: 300
+        attachment_size_bytes:
+          type: integer
+          minimum: 0
+          default: 0
+        initial_classification:
+          type: string
+          default: ''
+      required:
+      - attachment
+      - file_date
+      - file_name
+      - file_type
+      - owners
+      - reason
     AudienceEnum:
       enum:
       - students
@@ -1993,6 +3030,145 @@ components:
         * `registered` - Registered students
         * `alumni` - Alumni
         * `all` - Everyone
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        actor_user_id:
+          type: integer
+          readOnly: true
+        actor_kind:
+          type: string
+          readOnly: true
+        actor_label:
+          type: string
+          readOnly: true
+        action:
+          type: string
+          readOnly: true
+        outcome:
+          type: string
+          readOnly: true
+        object_type:
+          type: string
+          readOnly: true
+        object_id:
+          type: string
+          readOnly: true
+        detail:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - action
+      - actor_kind
+      - actor_label
+      - actor_user_id
+      - created_at
+      - detail
+      - id
+      - object_id
+      - object_type
+      - outcome
+    Backup:
+      type: object
+      description: |-
+        What every module member sees. The artifact path is operational
+        detail, withheld here and added back by BackupStaffSerializer.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/BackupKindEnum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/BackupStatusEnum'
+          readOnly: true
+        repository:
+          type: integer
+          readOnly: true
+        dataset:
+          type: string
+          readOnly: true
+          description: Empty for the whole platform state.
+        classification_filter:
+          readOnly: true
+        trigger_user_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+        finished_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        integrity_verified:
+          type: boolean
+          readOnly: true
+        error:
+          type: string
+          readOnly: true
+        consecutive_failures:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - classification_filter
+      - consecutive_failures
+      - created_at
+      - dataset
+      - error
+      - finished_at
+      - id
+      - integrity_verified
+      - kind
+      - repository
+      - started_at
+      - status
+      - trigger_user_id
+    BackupKindEnum:
+      enum:
+      - manual
+      - scheduled
+      type: string
+      description: |-
+        * `manual` - Manual
+        * `scheduled` - Scheduled
+    BackupStatusEnum:
+      enum:
+      - running
+      - success
+      - failed
+      type: string
+      description: |-
+        * `running` - Running
+        * `success` - Success
+        * `failed` - Failed
+    BadmsFrequency:
+      enum:
+      - daily
+      - weekly
+      - monthly
+      type: string
+      description: |-
+        * `daily` - Daily
+        * `weekly` - Weekly
+        * `monthly` - Monthly
     BulkOutcome:
       type: object
       properties:
@@ -2082,6 +3258,18 @@ components:
       - resume_link
       - roll_no
       - user_id
+    Classification:
+      type: object
+      properties:
+        classification:
+          type: string
+          maxLength: 12
+        note:
+          type: string
+          default: ''
+          maxLength: 300
+      required:
+      - classification
     Clearance:
       type: object
       description: Rule 24. `blocking` names each company, so a refusal is actionable.
@@ -2315,6 +3503,60 @@ components:
         * `consent_failure` - Did not appear after consenting (r19)
         * `code_of_conduct` - Code of conduct (r21)
         * `misrepresentation` - False resume or unfair means (r18)
+    Decision:
+      type: object
+      properties:
+        decision:
+          $ref: '#/components/schemas/DecisionEnum'
+        note:
+          type: string
+          default: ''
+          maxLength: 300
+      required:
+      - decision
+    DecisionEnum:
+      enum:
+      - approve
+      - reject
+      type: string
+      description: |-
+        * `approve` - approve
+        * `reject` - reject
+    DepartmentReport:
+      type: object
+      description: 'UC-BA-021: the operational picture for the HoD''s own department.'
+      properties:
+        department:
+          type: string
+          readOnly: true
+        archival_by_status:
+          type: object
+          additionalProperties:
+            type: integer
+          readOnly: true
+        storage_extensions_by_status:
+          type: object
+          additionalProperties:
+            type: integer
+          readOnly: true
+        archival_total:
+          type: integer
+          readOnly: true
+        storage_extension_total:
+          type: integer
+          readOnly: true
+        backup_operations:
+          type: object
+          additionalProperties:
+            type: integer
+          readOnly: true
+      required:
+      - archival_by_status
+      - archival_total
+      - backup_operations
+      - department
+      - storage_extension_total
+      - storage_extensions_by_status
     Detail:
       type: object
       properties:
@@ -2407,6 +3649,18 @@ components:
       - season_decision
       - semester
       - standing
+    Encryption:
+      type: object
+      properties:
+        key_ref:
+          type: string
+          maxLength: 120
+        note:
+          type: string
+          default: ''
+          maxLength: 300
+      required:
+      - key_ref
     FeeApproval:
       type: object
       description: Rules 20 and 21 both require the challan or receipt to be produced.
@@ -2423,6 +3677,33 @@ components:
       - fee_reference
       - season
       - user_id
+    GlobalSchedule:
+      type: object
+      description: The institution-wide schedule carries no dataset of its own.
+      properties:
+        dataset:
+          type: string
+          maxLength: 80
+        frequency:
+          $ref: '#/components/schemas/BadmsFrequency'
+        run_at:
+          type: string
+          format: time
+        weekday:
+          type: integer
+          maximum: 6
+          minimum: 0
+          nullable: true
+        classification_filter:
+          type: array
+          items:
+            type: string
+        repository:
+          type: integer
+      required:
+      - frequency
+      - repository
+      - run_at
     IncidentRecorded:
       type: object
       properties:
@@ -2433,6 +3714,26 @@ components:
       required:
       - incident
       - recommendation
+    Infrastructure:
+      type: object
+      properties:
+        name:
+          type: string
+          readOnly: true
+        capacity_bytes:
+          type: integer
+          readOnly: true
+        allocated_bytes:
+          type: integer
+          readOnly: true
+        available_bytes:
+          type: integer
+          readOnly: true
+      required:
+      - allocated_bytes
+      - available_bytes
+      - capacity_bytes
+      - name
     InterviewRound:
       type: object
       properties:
@@ -2663,6 +3964,19 @@ components:
       required:
       - password
       - username
+    ManualBackup:
+      type: object
+      properties:
+        repository:
+          type: integer
+        dataset:
+          type: string
+          default: ''
+          maxLength: 80
+        classification_filter:
+          type: array
+          items:
+            type: string
     ModeEnum:
       enum:
       - online
@@ -2671,6 +3985,32 @@ components:
       description: |-
         * `online` - Online
         * `offline` - Offline
+    MyRequest:
+      type: object
+      description: One row of the consolidated My-Requests tracking view (UC-BA-015).
+      properties:
+        kind:
+          type: string
+          readOnly: true
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        status:
+          type: string
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - id
+      - kind
+      - status
+      - title
+      - updated_at
     NavGroup:
       type: object
       description: |-
@@ -3085,6 +4425,35 @@ components:
       properties:
         active_role:
           type: string
+    PatchedScheduleWrite:
+      type: object
+      properties:
+        dataset:
+          type: string
+          maxLength: 80
+        frequency:
+          $ref: '#/components/schemas/BadmsFrequency'
+        run_at:
+          type: string
+          format: time
+        weekday:
+          type: integer
+          maximum: 6
+          minimum: 0
+          nullable: true
+        classification_filter:
+          type: array
+          items:
+            type: string
+        repository:
+          type: integer
+    PatchedSecurityPolicyPatch:
+      type: object
+      properties:
+        statement:
+          type: string
+        is_active:
+          type: boolean
     PlacementRecordDetail:
       type: object
       description: A student's own record, with what rules 22 and 24 still want from
@@ -3201,6 +4570,45 @@ components:
         * `certificate` - Certificate
         * `offer_letter` - Offer letter
         * `other` - Other
+    RbacAssignment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user_id:
+          type: integer
+          readOnly: true
+        permission_code:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        granted_by_user_id:
+          type: integer
+          readOnly: true
+      required:
+      - granted_by_user_id
+      - id
+      - is_active
+      - permission_code
+      - user_id
+    RbacWrite:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          minimum: 1
+        permission_code:
+          type: string
+          maxLength: 100
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+      required:
+      - action
+      - permission_code
+      - user_id
     Recommendation:
       type: object
       description: |-
@@ -3466,6 +4874,121 @@ components:
       - message
       - reason
       - route
+    Repository:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        kind:
+          type: string
+          readOnly: true
+        reachable:
+          type: boolean
+          readOnly: true
+        capacity_bytes:
+          type: integer
+          readOnly: true
+      required:
+      - capacity_bytes
+      - id
+      - kind
+      - name
+      - reachable
+    Restoration:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user_id:
+          type: integer
+          readOnly: true
+        archival:
+          type: integer
+          readOnly: true
+        archival_file_name:
+          type: string
+          readOnly: true
+        classification:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/RestorationStatusEnum'
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        decided_by_user_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        decided_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        executed_by_user_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        executed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        error:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - archival
+      - archival_file_name
+      - classification
+      - created_at
+      - decided_at
+      - decided_by_user_id
+      - error
+      - executed_at
+      - executed_by_user_id
+      - id
+      - note
+      - status
+      - user_id
+    RestorationRequest:
+      type: object
+      properties:
+        archival:
+          type: integer
+        note:
+          type: string
+          default: ''
+          maxLength: 300
+      required:
+      - archival
+    RestorationStatusEnum:
+      enum:
+      - requested
+      - pending_approval
+      - rejected
+      - approved_for_restoration
+      - restored
+      - failed
+      type: string
+      description: |-
+        * `requested` - Requested (standard path)
+        * `pending_approval` - Sensitive — Pending SysAdmin Approval
+        * `rejected` - Rejected
+        * `approved_for_restoration` - Approved for Restoration
+        * `restored` - Restored
+        * `failed` - Failed
     RoundOutcome:
       type: object
       properties:
@@ -3551,6 +5074,111 @@ components:
         * `deregister` - deregister
         * `bar_season` - bar_season
         * `bar_permanent` - bar_permanent
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        scope:
+          allOf:
+          - $ref: '#/components/schemas/ScopeEnum'
+          readOnly: true
+        dataset:
+          type: string
+          readOnly: true
+          default: ''
+        frequency:
+          allOf:
+          - $ref: '#/components/schemas/BadmsFrequency'
+          readOnly: true
+        run_at:
+          type: string
+          format: time
+          readOnly: true
+        weekday:
+          type: integer
+          readOnly: true
+          nullable: true
+        classification_filter:
+          readOnly: true
+        repository:
+          type: integer
+          readOnly: true
+        repository_name:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+          default: true
+        created_by_user_id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - classification_filter
+      - created_at
+      - created_by_user_id
+      - dataset
+      - frequency
+      - id
+      - is_active
+      - repository
+      - repository_name
+      - run_at
+      - scope
+      - weekday
+    ScheduleChange:
+      type: object
+      properties:
+        action:
+          type: string
+          readOnly: true
+        changed_by_user_id:
+          type: integer
+          readOnly: true
+        summary:
+          type: string
+          readOnly: true
+        at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - action
+      - at
+      - changed_by_user_id
+      - summary
+    ScheduleWrite:
+      type: object
+      properties:
+        dataset:
+          type: string
+          maxLength: 80
+        frequency:
+          $ref: '#/components/schemas/BadmsFrequency'
+        run_at:
+          type: string
+          format: time
+        weekday:
+          type: integer
+          maximum: 6
+          minimum: 0
+          nullable: true
+        classification_filter:
+          type: array
+          items:
+            type: string
+        repository:
+          type: integer
+      required:
+      - frequency
+      - repository
+      - run_at
     ScheduledCount:
       type: object
       properties:
@@ -3558,6 +5186,14 @@ components:
           type: integer
       required:
       - scheduled
+    ScopeEnum:
+      enum:
+      - local
+      - global
+      type: string
+      description: |-
+        * `local` - Local
+        * `global` - Global
     Season:
       type: object
       description: Just enough to populate a season picker.
@@ -3598,6 +5234,54 @@ components:
         * `it` - IT / software
         * `core` - Core engineering
         * `other` - Other
+    SecurityPolicy:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        statement:
+          type: string
+          readOnly: true
+        applies_to:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+          readOnly: true
+        defined_by_user_id:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - applies_to
+      - created_at
+      - defined_by_user_id
+      - id
+      - is_active
+      - name
+      - statement
+    SecurityPolicyWrite:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        statement:
+          type: string
+        applies_to:
+          type: string
+          default: ''
+          maxLength: 80
+      required:
+      - name
+      - statement
     Session:
       type: object
       properties:
@@ -3663,6 +5347,63 @@ components:
       description: |-
         * `campus` - Through the Placement Cell
         * `off_campus` - Off campus (rules 5 and 24)
+    SpecialArchival:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        performed_by_user_id:
+          type: integer
+          readOnly: true
+        data_reference:
+          type: string
+          readOnly: true
+        reason:
+          type: string
+          readOnly: true
+        outcome:
+          allOf:
+          - $ref: '#/components/schemas/SpecialArchivalOutcomeEnum'
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - data_reference
+      - id
+      - note
+      - outcome
+      - performed_by_user_id
+      - reason
+    SpecialArchivalOutcomeEnum:
+      enum:
+      - completed
+      - failed
+      type: string
+      description: |-
+        * `completed` - Completed
+        * `failed` - Failed
+    SpecialArchivalWrite:
+      type: object
+      properties:
+        data_reference:
+          type: string
+          maxLength: 300
+        reason:
+          type: string
+          default: ''
+        note:
+          type: string
+          default: ''
+          maxLength: 300
+      required:
+      - data_reference
     StaffStats:
       type: object
       description: PC-UC-011/012. Operational figures, staff only.
@@ -3691,6 +5432,109 @@ components:
       required:
       - available
       - season
+    StorageExtension:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user_id:
+          type: integer
+          readOnly: true
+        department:
+          type: string
+          readOnly: true
+        requested_bytes:
+          type: integer
+          readOnly: true
+        justification:
+          type: string
+          readOnly: true
+        attachment:
+          type: string
+          readOnly: true
+        usage_at_request:
+          type: integer
+          readOnly: true
+        quota_at_request:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StorageExtensionStatusEnum'
+          readOnly: true
+        decided_by_user_id:
+          type: integer
+          readOnly: true
+          nullable: true
+        decided_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - attachment
+      - created_at
+      - decided_at
+      - decided_by_user_id
+      - department
+      - id
+      - justification
+      - quota_at_request
+      - requested_bytes
+      - status
+      - usage_at_request
+      - user_id
+    StorageExtensionStatusEnum:
+      enum:
+      - submitted
+      - rejected
+      - approved
+      type: string
+      description: |-
+        * `submitted` - Submitted
+        * `rejected` - Rejected
+        * `approved` - Approved
+    StorageExtensionWrite:
+      type: object
+      properties:
+        requested_bytes:
+          type: integer
+          minimum: 1
+        justification:
+          type: string
+        attachment:
+          type: string
+          default: ''
+          maxLength: 300
+      required:
+      - justification
+      - requested_bytes
+    StorageProfile:
+      type: object
+      properties:
+        quota_bytes:
+          type: integer
+          readOnly: true
+        used_bytes:
+          type: integer
+          readOnly: true
+        full:
+          type: boolean
+          readOnly: true
+        checked_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - checked_at
+      - full
+      - quota_bytes
+      - used_bytes
     SubmitOfferLetter:
       type: object
       properties:

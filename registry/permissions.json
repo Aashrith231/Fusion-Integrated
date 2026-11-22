@@ -66,6 +66,120 @@
         "super_admin",
         "sysadmin"
       ],
+      "nav": {
+        "base_path": "/badms",
+        "icon": "FaDatabase",
+        "items": [
+          {
+            "code": "badms.backups",
+            "icon": "FaDatabase",
+            "label": "Backup Status",
+            "required_permission": "badms.backup.view",
+            "sort_order": 5,
+            "to": "/badms/backups"
+          },
+          {
+            "code": "badms.schedules",
+            "icon": "FaCalendarAlt",
+            "label": "Backup Schedules",
+            "required_permission": "badms.schedule.manage",
+            "sort_order": 10,
+            "to": "/badms/schedules"
+          },
+          {
+            "code": "badms.archival",
+            "icon": "FaBoxOpen",
+            "label": "Secure Archival",
+            "required_permission": "badms.archival.submit",
+            "sort_order": 15,
+            "to": "/badms/archival"
+          },
+          {
+            "code": "badms.archival_review",
+            "icon": "FaInbox",
+            "label": "Archival Review",
+            "required_permission": "badms.archival.decide",
+            "sort_order": 20,
+            "to": "/badms/archival-review"
+          },
+          {
+            "code": "badms.classification",
+            "icon": "FaTags",
+            "label": "Classification",
+            "required_permission": "badms.archival.classify",
+            "sort_order": 25,
+            "to": "/badms/classification"
+          },
+          {
+            "code": "badms.encryption",
+            "icon": "FaLock",
+            "label": "Encryption",
+            "required_permission": "badms.encryption.manage",
+            "sort_order": 30,
+            "to": "/badms/encryption"
+          },
+          {
+            "code": "badms.special_archival",
+            "icon": "FaArchive",
+            "label": "Special Archival",
+            "required_permission": "badms.special_archival.perform",
+            "sort_order": 35,
+            "to": "/badms/special-archival"
+          },
+          {
+            "code": "badms.restoration",
+            "icon": "FaUndo",
+            "label": "Restoration",
+            "required_permission": "badms.restoration.request",
+            "sort_order": 40,
+            "to": "/badms/restoration"
+          },
+          {
+            "code": "badms.storage",
+            "icon": "FaHdd",
+            "label": "My Storage",
+            "required_permission": "badms.storage.request",
+            "sort_order": 45,
+            "to": "/badms/storage"
+          },
+          {
+            "code": "badms.storage_approvals",
+            "icon": "FaClipboardCheck",
+            "label": "Storage Approvals",
+            "required_permission": "badms.storage.decide",
+            "sort_order": 50,
+            "to": "/badms/storage-approvals"
+          },
+          {
+            "code": "badms.audit",
+            "icon": "FaHistory",
+            "label": "Audit Logs",
+            "required_permission": "badms.audit.view",
+            "sort_order": 55,
+            "to": "/badms/audit"
+          },
+          {
+            "code": "badms.security",
+            "icon": "FaShieldAlt",
+            "label": "Security",
+            "required_permission": "badms.security.audit",
+            "sort_order": 60,
+            "to": "/badms/security"
+          },
+          {
+            "code": "badms.reports",
+            "icon": "FaChartBar",
+            "label": "Department Reports",
+            "required_permission": "badms.report.department",
+            "sort_order": 65,
+            "to": "/badms/reports"
+          }
+        ],
+        "label": "Backup & Archive",
+        "nav_section": "Data Management",
+        "sort_order": 20,
+        "status": "active"
+      },
       "permissions": [
         {
           "code": "badms.backup.view",
