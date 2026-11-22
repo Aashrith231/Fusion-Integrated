@@ -43,9 +43,10 @@ R1-17 rebase (fixed: branch is on `upstream/main`), R1-18 noqa reasons
 
 To be produced by the builder with the IAM running (`make dev` + IAM on
 8001), one row per role × use case, each row carrying the `runserver` log
-lines of its requests. Status: **pending** — run after Student 2's
-baseline; the HTTP-level journeys in `tests/test_journeys.py` already
-exercise every main flow.
+lines of its requests. Status: **not run before the hand-in deadline** —
+the HTTP-level journeys in `tests/test_journeys.py` exercise every main
+flow, and the Playwright specs in `client/e2e/badms/` were written but not
+executed (they need the IAM on 8001 and `make dev` running).
 
 ## Approvals
 

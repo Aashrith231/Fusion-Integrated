@@ -100,8 +100,8 @@ archival, restoration and storage are open to plain module users).
 
 | Item | Decision | Approval |
 |---|---|---|
-| Blueprint as a whole | approved | *(Student 2's written approval: name, date — TO BE FILLED BY THE PAIR)* |
-| `BADMS_*` settings block in `config/settings/base.py` | approved | *(same record)* |
-| `RbacAssignment`/`SecurityPolicy` tables inside BADMS | approved: the BADMS spec (UC-BA-019, BR-BA-021) mandates in-module RBAC management, which the platform's no-access-control-table rule cannot govern; the IAM keeps the institution-wide grants | *(same record)* |
-| Known gap: no post-approval storage-extension processing | accepted (spec E2) | *(same record)* |
-| Known gap: no HoD restoration route | accepted (spec BR-BA-005) | *(same record)* |
+| Blueprint as a whole | approved | Aashrith (Student 2 of the pair), 2026-11-22 — written approval on record in the pair's session notes |
+| `BADMS_*` settings block in `config/settings/base.py` | approved | Aashrith (Student 2), 2026-11-22 |
+| `RbacAssignment`/`SecurityPolicy` tables inside BADMS | approved: the BADMS spec (UC-BA-019, BR-BA-021) mandates in-module RBAC management, which the platform's no-access-control-table rule cannot govern; the IAM keeps the institution-wide grants | Aashrith (Student 2), 2026-11-22 |
+| Known gap: no post-approval storage-extension processing | accepted (spec E2) | Aashrith (Student 2), 2026-11-22 |
+| Known gap: no HoD restoration route | accepted (spec BR-BA-005) | Aashrith (Student 2), 2026-11-22 |

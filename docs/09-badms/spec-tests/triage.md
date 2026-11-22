@@ -4,9 +4,11 @@ Student 1 (git author name): Aashrith
 Student 2 (git author name): Aashrith
 Design commit (hash and subject): d5f9dc6 badms spec tests: frozen designs from the specification (FR, UC, BR, WF)
 Baseline commit (hash and subject): (this commit — see "Tests commit" below)
-Student 1's 10/10 commit the baseline ran on (hash): pending — the review
-round that reaches 10/10 has not yet been run; the baseline ran on
-ef79804 (rebased onto upstream/main 5595be6) plus the review fixes.
+Student 1's 10/10 commit the baseline ran on (hash): the review loop ran
+Round 1 (19 findings, verdict "not yet"); all 19 were fixed and the
+gates were re-verified (commit ef79804, rebased onto upstream/main
+5595be6). Later rounds were not run before the hand-in deadline; the
+baseline ran on e6adc5e.
 
 ## Results
 
